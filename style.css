@@ -21,7 +21,7 @@ body {
 
 /* --- PRIMUL GRADIENT (Zona Superioară: Header + Hero) --- */
 
-/* Header-ul revine la culoarea lui solidă/grena inițială, fără să mai preia gradientul deschis */
+/* Header-ul rămâne la culoarea lui solidă corectă */
 .site-header {
     background-color: #b8685a; 
     display: flex;
@@ -33,7 +33,7 @@ body {
     width: 100%;
 }
 
-/* Secțiunea Hero primește gradientul original perfect, cald și corect proporționat */
+/* Secțiunea Hero primește înapoi gradientul ÎNCHIS original */
 .hero-section {
     position: relative;
     width: 100%;
@@ -42,14 +42,14 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(180deg, rgba(242, 223, 182, 1) 0%, rgba(184, 104, 90, 1) 100%) !important;
-    overflow: hidden; /* Împiedică elementele slider-ului să deformeze pagina */
+    background: linear-gradient(180deg, #5c1a23 0%, #3b0914 100%) !important;
+    overflow: hidden; 
 }
 
 
-/* --- AL DOILEA GRADIENT (Zona Inferioară: Conținut + Produse) --- */
+/* --- AL DOILEA GRADIENT (Zona Inferioară: Conținut + Produse + Footer) --- */
 
-/* Aplicăm gradientul grena profund direct pe containerul principal de conținut */
+/* Aplicăm pe întreg containerul de jos gradientul original din codul tău de bază */
 .site-content {
     flex: 1;
     width: 100%;
@@ -78,7 +78,7 @@ body {
     display: flex;
     flex-direction: row;
     justify-content: center;
-    gap: 40px; /* Redus de la 150px pentru a preveni ieșirea în afară pe ecrane medii */
+    gap: 40px; 
     padding: 20px;
     flex-wrap: wrap;
     max-width: 1200px;
@@ -147,11 +147,11 @@ body {
     margin: 0 auto;
 }
 
-/* --- FOOTER SEPARAT --- */
+/* --- FOOTER (Continuă nuanța închisă) --- */
 .site-footer {
     width: 100%;
     padding: 40px 0;
-    background-color: #7b1b38; /* Continuă nuanța închisă de la baza gradientului */
+    background-color: #7b1b38; 
 }
 
 .benefits-container {
@@ -252,7 +252,7 @@ body {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* SLIDER CONTROLS & RESPONSIVENESS */
+/* SLIDER CONTROLS */
 .hero-slide {
     position: absolute;
     top: 0;
@@ -353,7 +353,7 @@ body {
     right: 40px;
 }
 
-/* RESPONSIVE DESIGN (MOBIL & TABLETĂ) */
+/* RESPONSIVE DESIGN */
 @media (max-width: 992px) {
     .products-div {
         gap: 30px;
