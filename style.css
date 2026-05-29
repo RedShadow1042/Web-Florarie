@@ -4,36 +4,36 @@
     box-sizing: border-box;
 }
 
+/* Prevenim deformarea paginii pe orizontală la orice rezoluție */
+html, body {
+    width: 100%;
+    overflow-x: hidden;
+}
+
 body {
     font-family: Arial, sans-serif;
     color: #ffffff;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    /* Fundalul de bază al paginii este cel închis, pentru a prelua fluid continuarea elementelor */
-    background: #7b1b38;
+    background-color: #7b1b38; /* Culoare de siguranță pentru fundal general */
 }
 
-.site-content {
-    flex: 1;
-}
+/* --- PRIMUL GRADIENT (Zona Superioară: Header + Hero) --- */
 
-/* PRIMUL GRADIENT: Zona de sus (Header + Hero) */
-/* Unim header-ul și secțiunea hero într-un singur bloc vizual cald */
-.site-header, 
-.hero-section {
-    background: linear-gradient(180deg, rgba(242, 223, 182, 1) 0%, rgba(184, 104, 90, 1) 100%) !important;
-}
-
+/* Header-ul revine la culoarea lui solidă/grena inițială, fără să mai preia gradientul deschis */
 .site-header {
+    background-color: #b8685a; 
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
     padding: 20px 40px;
     border: 10px solid rgba(255, 255, 255, 0.2);
+    width: 100%;
 }
 
+/* Secțiunea Hero primește gradientul original perfect, cald și corect proporționat */
 .hero-section {
     position: relative;
     width: 100%;
@@ -42,19 +42,26 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    background: linear-gradient(180deg, rgba(242, 223, 182, 1) 0%, rgba(184, 104, 90, 1) 100%) !important;
+    overflow: hidden; /* Împiedică elementele slider-ului să deformeze pagina */
 }
 
-/* AL DOILEA GRADIENT: Zona de jos (Produse + Beneficii/Footer) */
-/* Aplicăm gradientul grena pe secțiunea de conținut și footer */
-.site-content,
-.site-footer {
-    background: linear-gradient(180deg, rgba(184, 104, 90, 1) 0%, rgba(123, 27, 56, 1) 100%);
+
+/* --- AL DOILEA GRADIENT (Zona Inferioară: Conținut + Produse) --- */
+
+/* Aplicăm gradientul grena profund direct pe containerul principal de conținut */
+.site-content {
+    flex: 1;
+    width: 100%;
+    background: linear-gradient(180deg, rgba(184, 104, 90, 1) 0%, rgba(123, 27, 56, 1) 100%) !important;
+    padding-bottom: 40px;
 }
 
 .products-class-title {
     text-align: center;
     position: relative;
-    padding-bottom: 50px;
+    padding-top: 20px;
+    padding-bottom: 30px;
     font-size: 175%;
     text-shadow: 5px 3px 3px pink;
 }
@@ -71,9 +78,11 @@ body {
     display: flex;
     flex-direction: row;
     justify-content: center;
-    gap: 150px;
-    padding: 40px 20px;
+    gap: 40px; /* Redus de la 150px pentru a preveni ieșirea în afară pe ecrane medii */
+    padding: 20px;
     flex-wrap: wrap;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .product-card {
@@ -138,9 +147,11 @@ body {
     margin: 0 auto;
 }
 
+/* --- FOOTER SEPARAT --- */
 .site-footer {
     width: 100%;
     padding: 40px 0;
+    background-color: #7b1b38; /* Continuă nuanța închisă de la baza gradientului */
 }
 
 .benefits-container {
@@ -175,6 +186,7 @@ body {
     font-size: 230%;
 }
 
+/* --- NAVBAR ȘI ELEMENTE INTERNE --- */
 .main-nav ul {
     display: flex;
     flex-direction: row;
@@ -240,6 +252,7 @@ body {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
+/* SLIDER CONTROLS & RESPONSIVENESS */
 .hero-slide {
     position: absolute;
     top: 0;
@@ -265,6 +278,7 @@ body {
 
 .hero-content {
     max-width: 800px;
+    width: 100%;
 }
 
 .hero-content h2 {
@@ -330,18 +344,19 @@ body {
 .hero-section:hover .prev-btn {
     opacity: 1;
     visibility: visible;
-    left: 80px;
+    left: 40px;
 }
 
 .hero-section:hover .next-btn {
     opacity: 1;
     visibility: visible;
-    right: 80px;
+    right: 40px;
 }
 
+/* RESPONSIVE DESIGN (MOBIL & TABLETĂ) */
 @media (max-width: 992px) {
     .products-div {
-        gap: 60px;
+        gap: 30px;
     }
 }
 
@@ -357,8 +372,8 @@ body {
     .main-nav ul {
         flex-wrap: wrap;
         justify-content: center;
-        gap: 20px;
-        font-size: 130%;
+        gap: 15px;
+        font-size: 120%;
     }
 
     .icon-user, .cart-icon {
@@ -368,17 +383,9 @@ body {
     }
 
     .hero-section {
-        height: 480px; 
-        padding: 20px;
+        height: 400px; 
+        padding: 15px;
         margin-bottom: 30px;
-    }
-
-    .hero-slide {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
     }
 
     .hero-content h2 {
@@ -406,13 +413,12 @@ body {
 
     .hero-section .prev-btn { left: 10px; }
     .hero-section .next-btn { right: 10px; }
-
     .hero-section:hover .prev-btn { left: 10px; }
     .hero-section:hover .next-btn { right: 10px; }
 
     .products-class-title {
         font-size: 140%;
-        padding-bottom: 30px;
+        padding-bottom: 20px;
     }
 
     .divider-line {
@@ -420,8 +426,8 @@ body {
     }
 
     .products-div {
-        gap: 30px;
-        padding: 20px 10px;
+        gap: 20px;
+        padding: 10px;
     }
 
     .product-card {
