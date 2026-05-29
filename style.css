@@ -4,7 +4,6 @@
     box-sizing: border-box;
 }
 
-/* Prevenim deformarea paginii pe orizontală la orice rezoluție */
 html, body {
     width: 100%;
     overflow-x: hidden;
@@ -16,14 +15,11 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    background-color: #7b1b38; /* Culoare de siguranță pentru fundal general */
+    background: linear-gradient(180deg, rgba(242, 223, 182, 1) 0%, rgba(123, 27, 56, 1) 100%);
 }
 
-/* --- PRIMUL GRADIENT (Zona Superioară: Header + Hero) --- */
-
-/* Header-ul rămâne la culoarea lui solidă corectă */
 .site-header {
-    background-color: #b8685a; 
+    background-color: #b8685a;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -33,7 +29,13 @@ body {
     width: 100%;
 }
 
-/* Secțiunea Hero primește înapoi gradientul ÎNCHIS original */
+.site-content {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
 .hero-section {
     position: relative;
     width: 100%;
@@ -42,19 +44,11 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(180deg, #5c1a23 0%, #3b0914 100%) !important;
-    overflow: hidden; 
-}
-
-
-/* --- AL DOILEA GRADIENT (Zona Inferioară: Conținut + Produse + Footer) --- */
-
-/* Aplicăm pe întreg containerul de jos gradientul original din codul tău de bază */
-.site-content {
-    flex: 1;
-    width: 100%;
-    background: linear-gradient(180deg, rgba(184, 104, 90, 1) 0%, rgba(123, 27, 56, 1) 100%) !important;
-    padding-bottom: 40px;
+    background: linear-gradient(180deg, rgba(245, 235, 235, 1) 0%, rgba(242, 223, 182, 1) 100%);
+    overflow: hidden;
+    border-bottom: 15px solid #d3875b;
+    border-left: 15px solid #d3875b;
+    border-right: 15px solid #d3875b;
 }
 
 .products-class-title {
@@ -78,11 +72,13 @@ body {
     display: flex;
     flex-direction: row;
     justify-content: center;
-    gap: 40px; 
-    padding: 20px;
+    align-content: flex-start;
+    gap: 40px;
+    padding: 20px 20px 60px 20px;
     flex-wrap: wrap;
-    max-width: 1200px;
+    max-width: 1300px;
     margin: 0 auto;
+    width: 100%;
 }
 
 .product-card {
@@ -95,6 +91,7 @@ body {
     justify-content: space-between;
     align-items: center;
     width: 220px;
+    height: 390px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     color: #333333;
 }
@@ -112,27 +109,39 @@ body {
 
 .add-to-cart {
     cursor: pointer;
-    padding: 8px 15px;
-    background-color: #d15b76;
-    color: white;
-    border: none;
+    padding: 12px 15px;
+    background-color: #f5ebe1;
+    border: 1px solid #c2ae99;
+    color: #3d2220;
+    font-weight: 900;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
     border-radius: 4px;
     width: 100%;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .add-to-cart:hover {
-    background-color: #a74b60;
+    background-color: #ebdccb;
+    border-color: #b09982;
 }
 
 .view-details {
     cursor: pointer;
-    padding: 8px 15px;
+    padding: 12px 15px;
     background-color: #769b21;
-    color: white;
     border: none;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
     border-radius: 4px;
     width: 100%;
     margin-top: 8px;
+    transition: background-color 0.2s ease;
 }
 
 .view-details:hover {
@@ -147,11 +156,10 @@ body {
     margin: 0 auto;
 }
 
-/* --- FOOTER (Continuă nuanța închisă) --- */
 .site-footer {
     width: 100%;
     padding: 40px 0;
-    background-color: #7b1b38; 
+    margin-top: auto;
 }
 
 .benefits-container {
@@ -186,7 +194,6 @@ body {
     font-size: 230%;
 }
 
-/* --- NAVBAR ȘI ELEMENTE INTERNE --- */
 .main-nav ul {
     display: flex;
     flex-direction: row;
@@ -220,13 +227,14 @@ body {
     gap: 20px;
 }
 
-.icon-user, .cart-icon {
+.icon-user,
+.cart-icon {
     display: flex;
     justify-content: center;
     align-items: center;
     width: 60px;
     height: 60px;
-    background-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(255,255,255,0.15);
     border-radius: 50%;
     font-size: 30px;
     cursor: pointer;
@@ -234,8 +242,9 @@ body {
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.icon-user:hover, .cart-icon:hover {
-    background-color: rgba(255, 255, 255, 0.3);
+.icon-user:hover,
+.cart-icon:hover {
+    background-color: rgba(255,255,255,0.3);
     transform: scale(1.2);
 }
 
@@ -249,10 +258,8 @@ body {
     padding: 2px 6px;
     border-radius: 50%;
     font-weight: bold;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* SLIDER CONTROLS */
 .hero-slide {
     position: absolute;
     top: 0;
@@ -267,13 +274,11 @@ body {
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.8s ease-in-out, visibility 0.8s ease-in-out;
-    pointer-events: none;
 }
 
 .hero-slide.active {
     opacity: 1;
     visibility: visible;
-    pointer-events: auto;
 }
 
 .hero-content {
@@ -284,14 +289,13 @@ body {
 .hero-content h2 {
     font-size: 42px;
     margin-bottom: 20px;
-    color: #f2dfb6;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    color: #5c1a23;
 }
 
 .hero-content p {
     font-size: 20px;
+    color: #4a2e2b;
     margin-bottom: 35px;
-    opacity: 0.95;
     line-height: 1.6;
 }
 
@@ -301,59 +305,32 @@ body {
     background-color: #769b21;
     color: #ffffff;
     font-weight: bold;
-    font-size: 18px;
     text-decoration: none;
     border-radius: 30px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.hero-btn:hover {
-    background-color: #57701d;
-    transform: scale(1.05);
-}
-
-.prev-btn, .next-btn {
+.prev-btn,
+.next-btn {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background-color: rgba(0, 0, 0, 0.4);
-    color: white;
-    border: none;
     width: 50px;
     height: 50px;
-    font-size: 24px;
-    cursor: pointer;
+    border: none;
     border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10;
-    opacity: 0;
-    visibility: hidden;
-    transition: background-color 0.3s ease, opacity 0.3s ease, left 0.3s ease, right 0.3s ease, visibility 0.3s ease;
+    background: rgba(0,0,0,0.4);
+    color: white;
+    cursor: pointer;
 }
 
-.prev-btn { left: 40px; }
-.next-btn { right: 40px; }
-
-.prev-btn:hover, .next-btn:hover {
-    background-color: rgba(0, 0, 0, 0.7);
-}
-
-.hero-section:hover .prev-btn {
-    opacity: 1;
-    visibility: visible;
+.prev-btn {
     left: 40px;
 }
 
-.hero-section:hover .next-btn {
-    opacity: 1;
-    visibility: visible;
+.next-btn {
     right: 40px;
 }
 
-/* RESPONSIVE DESIGN */
 @media (max-width: 992px) {
     .products-div {
         gap: 30px;
@@ -389,13 +366,13 @@ body {
     }
 
     .hero-content h2 {
-        font-size: 24px;
+        font-size: 26px;
         margin-bottom: 15px;
     }
 
     .hero-content p {
-        font-size: 15px;
-        margin-bottom: 20px;
+        font-size: 16px;
+        margin-bottom: 25px;
     }
 
     .hero-btn {
@@ -403,18 +380,13 @@ body {
         font-size: 16px;
     }
 
-    .hero-section .prev-btn, .hero-section .next-btn {
-        opacity: 0.8;
-        visibility: visible;
+    .prev-btn, .next-btn {
         width: 38px;
         height: 38px;
-        font-size: 16px;
     }
 
-    .hero-section .prev-btn { left: 10px; }
-    .hero-section .next-btn { right: 10px; }
-    .hero-section:hover .prev-btn { left: 10px; }
-    .hero-section:hover .next-btn { right: 10px; }
+    .prev-btn { left: 10px; }
+    .next-btn { right: 10px; }
 
     .products-class-title {
         font-size: 140%;
@@ -433,6 +405,7 @@ body {
     .product-card {
         width: 100%;
         max-width: 280px;
+        height: fit-content;
     }
 
     .benefits-container {
