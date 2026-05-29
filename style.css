@@ -334,6 +334,12 @@ body {
 }
 
 @media (max-width: 768px) {
+    body {
+        /* Permite gradientului să curgă stabil și corect pe ecranele mobile */
+        background-attachment: scroll !important;
+        background-size: cover;
+    }
+
     .site-header {
         flex-direction: column;
         gap: 20px;
