@@ -15,7 +15,7 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    background: linear-gradient(180deg, rgba(242, 223, 182, 1) 0%, rgba(123, 27, 56, 1) 100%);
+    background: linear-gradient(180deg, rgba(242, 223, 182, 1) 25%, rgba(123, 27, 56, 1) 100%);
 }
 
 .site-header {
