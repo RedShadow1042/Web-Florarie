@@ -1,7 +1,10 @@
 const slides = document.querySelectorAll('.hero-slide');
 const dots = document.querySelectorAll('.dot');
+const cartCountElement = document.querySelector('.cart-count');
+const addToCartButtons = document.querySelectorAll('.add-to-cart');
 let currentSlide = 0;
 let slideInterval;
+let cart = [];
 
 function showSlide(index) {
     slides.forEach(slide => slide.classList.remove('active'));
@@ -33,6 +36,29 @@ dots.forEach((dot, index) => {
         currentSlide = index;
         showSlide(currentSlide);
         resetAutoSlide();
+    });
+});
+
+function updateCartCount(){
+    cartCountElement.textContent = cart.length;
+}
+
+addToCartButtons.forEach((button) => {
+    button.addEventListener('click', (event) => {
+        const productCard = event.target.closest('.product-card');
+        
+        const productName = productCard.querySelector('h3').textContent;
+        const productPriceText = productCard.querySelector('.price').textContent;
+        
+        const productPrice = parseInt(productPriceText.replace(' LEI', ''));
+
+        const product = {
+            name: productName,
+            price: productPrice
+        };
+
+        cart.push(product);
+        updateCartCount();
     });
 });
 
