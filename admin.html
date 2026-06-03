@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Panou Administrator - Floraria x</title>
+    <style>
+        /* Stiluri pentru tab-uri */
+        .admin-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .tab-btn {
+            padding: 12px 25px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            border: 2px solid #5c1a23;
+            background-color: white;
+            color: #5c1a23;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            background-color: #5c1a23;
+            color: white;
+        }
+        .admin-section {
+            display: none; 
+            width: 100%;
+        }
+        .admin-section.active {
+            display: block; 
+        }
+
+        /* Stiluri pentru centrare perfectă pe mijloc */
+        .admin-centered-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center;
+            width: 100%;
+            max-width: 700px; 
+            margin: 0 auto;  
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .admin-box {
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 30px;
+        }
+
+        /* Bara de căutare */
+        .admin-search-wrapper {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .admin-search-input {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 14px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        .admin-search-input:focus {
+            border-color: #5c1a23;
+        }
+
+        /* Zona de gestionare produse listate */
+        .admin-product-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .admin-product-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="logo">
+            <h1>Floraria x</h1>
+            <p>~ Panou de Control Administrator ~</p>
+        </div>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="index.html">Pagina Principala</a></li>
+                <li><a href="autentificare.html">Gestionare Cont</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="admin-tabs">
+        <button class="tab-btn active" data-tab="add-bouquet-sec">1. Adaugă / Șterge buchete</button>
+        <button class="tab-btn" data-tab="active-orders-sec">2. Vezi comenzi active</button>
+        <button class="tab-btn" data-tab="completed-orders-sec">3. Vezi comenzi finalizate</button>
+    </div>
+
+    <main class="site-content" style="display: none;" id="admin-main-content">
+        <div class="admin-centered-container">
+            
+            <div id="add-bouquet-sec" class="admin-section active">
+                <div class="cart-container admin-box">
+                    <h2>Adaugă un buchet nou</h2>
+                    <form id="add-product-form">
+                        <div class="input-group">
+                            <label for="prod-name">Nume Buchet</label>
+                            <input type="text" id="prod-name" required placeholder="Ex: Buchet de Primăvară Lalele">
+                        </div>
+                        <div class="input-group">
+                            <label for="prod-price">Preț (LEI)</label>
+                            <input type="number" id="prod-price" required min="1" placeholder="Ex: 150">
+                        </div>
+                        <div class="input-group">
+                            <label for="prod-image">Imagine Buchet (Obligatorie)</label>
+                            <input type="file" id="prod-image" accept="image/*" required style="padding: 10px 0;">
+                        </div>
+                        <div class="input-group">
+                            <label for="prod-desc">Descriere Produs</label>
+                            <textarea id="prod-desc" required rows="4" placeholder="Ex: Un aranjament superb format din 15 lalele multicolore..."></textarea>
+                        </div>
+                        <button type="submit" class="view-details" style="width: 100%;">Adaugă Produsul pe Site</button>
+                    </form>
+                </div>
+
+                <div class="cart-container admin-box">
+                    <h2>Buchetele adăugate</h2>
+                    <div id="admin-custom-products-list">
+                        </div>
+                </div>
+            </div>
+
+            <div id="active-orders-sec" class="admin-section">
+                <div class="admin-search-wrapper">
+                    <input type="text" id="search-active-orders" class="admin-search-input" placeholder="🔍 Caută după ID comandă, nume sau email client...">
+                </div>
+                <div class="cart-container admin-box">
+                    <h2>Comenzi Active (În așteptare)</h2>
+                    <div id="admin-orders-active-list"></div>
+                </div>
+            </div>
+
+            <div id="completed-orders-sec" class="admin-section">
+                <div class="admin-search-wrapper">
+                    <input type="text" id="search-completed-orders" class="admin-search-input" placeholder="🔍 Caută după ID comandă, nume sau email client...">
+                </div>
+                <div class="cart-container admin-box">
+                    <h2>Istoric Comenzi Finalizate</h2>
+                    <div id="admin-orders-completed-list"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="admin.js"></script>
+</body>
+</html>

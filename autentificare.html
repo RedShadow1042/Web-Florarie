@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Autentificare - Floraria x</title>
+</head>
+<body>
+    <header class="site-header">
+        <div class="logo">
+            <h1>Floraria x</h1>
+            <p>~ Secțiune Cont ~</p>
+        </div>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="index.html">Pagina Principala</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="site-content">
+        <div id="logged-in-panel" class="auth-container" style="display: none;">
+            <div class="auth-box" style="max-width: 500px;">
+                <h2 id="welcome-message">Gestionare Cont</h2>
+                <p style="margin-bottom: 25px; color: #666; text-align: center;">Informațiile profilului tău:</p>
+                
+                <div class="profile-data-list">
+                    <div class="profile-data-item">
+                        <div>
+                            <strong>Nume complet:</strong>
+                            <p id="display-name">-</p>
+                        </div>
+                        <button class="view-details btn-small" id="open-name-modal">Modifică</button>
+                    </div>
+
+                    <div class="profile-data-item">
+                        <div>
+                            <strong>Adresă Email:</strong>
+                            <p id="display-email">-</p>
+                        </div>
+                        <button class="view-details btn-small" id="open-email-modal">Modifică</button>
+                    </div>
+
+                    <div class="profile-data-item">
+                        <div>
+                            <strong>Parolă cont:</strong>
+                            <p>********</p>
+                        </div>
+                        <button class="view-details btn-small" id="open-password-modal">Modifică</button>
+                    </div>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid #f5ebe1; margin: 25px 0;">
+                
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button id="logout-btn" class="add-to-cart" style="width: 100%;">Ieși din cont (Log Out)</button>
+                    <button id="delete-acc-btn" class="add-to-cart" style="width: 100%; background-color: #ff4d4d; color: white; border-color: #cc0000;">Șterge definitiv contul</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-name" class="modal-overlay">
+            <div class="modal-box">
+                <h3>Modifică Numele</h3>
+                <form id="form-change-name">
+                    <div class="input-group">
+                        <label for="new-name">Nume nou complet</label>
+                        <input type="text" id="new-name" required>
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="button" class="add-to-cart btn-close-modal">Anulează</button>
+                        <button type="submit" class="view-details">Salvează</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="modal-email" class="modal-overlay">
+            <div class="modal-box">
+                <h3>Modifică Email-ul</h3>
+                <form id="form-change-email">
+                    <div class="input-group">
+                        <label for="new-email">Adresă nouă de email</label>
+                        <input type="email" id="new-email" required>
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="button" class="add-to-cart btn-close-modal">Anulează</button>
+                        <button type="submit" class="view-details">Salvează</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="modal-password" class="modal-overlay">
+            <div class="modal-box">
+                <h3>Modifică Parola</h3>
+                <form id="form-change-password">
+                    <div class="input-group">
+                        <label for="old-password">Parola actuală (veche)</label>
+                        <input type="password" id="old-password" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="new-password">Parola nouă</label>
+                        <input type="password" id="new-password" required>
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="button" class="add-to-cart btn-close-modal">Anulează</button>
+                        <button type="submit" class="view-details">Salvează</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="auth-forms" class="auth-container">
+            <div class="auth-box">
+                <h2>Conectare</h2>
+                <form id="login-form">
+                    <div class="input-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="login-password">Parolă</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit" class="view-details">Intră în cont</button>
+                </form>
+            </div>
+
+            <div class="auth-box">
+                <h2>Creare Cont Nou</h2>
+                <form id="register-form">
+                    <div class="input-group">
+                        <label for="reg-name">Nume Complet</label>
+                        <input type="text" id="reg-name" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="reg-email">Email</label>
+                        <input type="email" id="reg-email" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="reg-password">Parolă</label>
+                        <input type="password" id="reg-password" required>
+                    </div>
+                    <div class="input-group checkbox-group">
+                        <input type="checkbox" id="reg-is-admin">
+                        <label for="reg-is-admin">Sunt Administrator (Cont special)</label>
+                    </div>
+                    <button type="submit" class="add-to-cart">Înregistrare</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="auth.js"></script>
+</body>
+</html>

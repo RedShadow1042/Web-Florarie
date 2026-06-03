@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Coșul meu - Floraria x</title>
+</head>
+<body>
+    <header class="site-header">
+        <div class="logo">
+            <h1>Floraria x</h1>
+            <p>~ Coșul de Cumpărături ~</p>
+        </div>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="index.html">Pagina Principala</a></li>
+                <li><a href="comenzi.html" id="nav-my-orders" style="font-weight: bold;">Comenzile Mele</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="site-content">
+        <div class="cart-container">
+            <h2>Produsele tale</h2>
+            
+            <div id="cart-items-list">
+                </div>
+
+            <div class="cart-summary" id="cart-summary-box" style="display: none;">
+                <h3>Total de plată: <span id="cart-total-price">0</span> LEI</h3>
+                <button id="checkout-btn" class="view-details" style="margin-top: 20px; width: auto; padding: 15px 40px;">Finalizează Comanda</button>
+                <button id="clear-cart-btn" class="add-to-cart" style="margin-top: 10px; width: auto; padding: 10px 20px; font-size: 13px; background-color: #ff4d4d; color: white; border-color: #cc0000;">Golește Coșul</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="cart.js"></script>
+</body>
+</html>
