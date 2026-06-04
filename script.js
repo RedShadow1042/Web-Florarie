@@ -1,7 +1,6 @@
 const slides = document.querySelectorAll('.hero-slide');
 const dots = document.querySelectorAll('.dot');
 const cartCountElement = document.querySelector('.cart-count');
-const addToCartButtons = document.querySelectorAll('.add-to-cart');
 let currentSlide = 0;
 let slideInterval;
 let cart = JSON.parse(localStorage.getItem('floraria_cart')) || [];
@@ -43,25 +42,62 @@ function updateCartCount(){
     cartCountElement.textContent = cart.length;
 }
 
-addToCartButtons.forEach((button) => {
-    button.addEventListener('click', (event) => {
-        const productCard = event.target.closest('.product-card');
-        
-        const productName = productCard.querySelector('h3').textContent;
-        const productPriceText = productCard.querySelector('.price').textContent;
-        
-        const productPrice = parseInt(productPriceText.replace(' LEI', ''));
+// ==========================================
+// INTEGRARE DYNAMICA BUCHETE DIN ADMIN
+// ==========================================
+function renderHomepageProducts() {
+    const productsContainer = document.getElementById('homepage-products-container');
+    if (!productsContainer) return;
 
-        const product = {
-            name: productName,
-            price: productPrice
-        };
+    // Preluăm catalogul salvat de admin în localStorage
+    let catalog = JSON.parse(localStorage.getItem('floraria_bouquets')) || [];
+    
+    // Filtrăm doar buchetele care sunt selectate pentru prima pagină
+    let homepageBouquets = catalog.filter(b => b.onHomePage);
 
-        cart.push(product);
-        localStorage.setItem('floraria_cart', JSON.stringify(cart));
-        updateCartCount();
+    // Dacă adminul a configurat buchete în panou, le generăm pe ecran peste cele statice
+    if (homepageBouquets.length > 0) {
+        productsContainer.innerHTML = ''; // Golim structura default din HTML
+
+        homepageBouquets.forEach(bouquet => {
+            const productCard = document.createElement('div');
+            productCard.className = 'product-card';
+
+            productCard.innerHTML = `
+                <img src="${bouquet.image}" alt="${bouquet.name}" onerror="this.src='Imagini/blank_image.jpg'">
+                <h3>${bouquet.name}</h3>
+                <p class="price">${bouquet.price}</p>
+                <button class="add-to-cart">Adauga in cos</button>
+                <button class="view-details" onclick="alert('Descriere produs:\n\n${bouquet.desc || bouquet.name}')">Detalii produs</button>
+            `;
+            productsContainer.appendChild(productCard);
+        });
+    }
+
+    // Atașăm evenimentele de click pentru butoanele „Adaugă în coș” (atât pentru cele noi, cât și pentru fallback)
+    const activeAddToCartButtons = productsContainer.querySelectorAll('.add-to-cart');
+    activeAddToCartButtons.forEach((button) => {
+        button.addEventListener('click', (event) => {
+            const productCard = event.target.closest('.product-card');
+            
+            const productName = productCard.querySelector('h3').textContent;
+            const productPriceText = productCard.querySelector('.price').textContent;
+            
+            // Eliminăm textul „LEI” sau „RON” pentru a obține corect prețul numeric ca în codul tău inițial
+            const cleanPrice = productPriceText.replace(' LEI', '').replace(' RON', '').trim();
+            const productPrice = parseInt(cleanPrice) || 0;
+
+            const product = {
+                name: productName,
+                price: productPrice
+            };
+
+            cart.push(product);
+            localStorage.setItem('floraria_cart', JSON.stringify(cart));
+            updateCartCount();
+        });
     });
-});
+}
 
 function checkLoggedInUser() {
     const currentUser = JSON.parse(localStorage.getItem('floraria_current_user'));
@@ -74,19 +110,23 @@ function checkLoggedInUser() {
             userIconLink.style.width = 'auto';
             userIconLink.style.padding = '0 15px';
             userIconLink.style.borderRadius = '30px';
-            // Îl lăsăm să poată da click pe iconiță ca să meargă la autentificare.html și să vadă butoanele de management cont!
             userIconLink.href = 'autentificare.html'; 
         }
 
-        // Doar butonul de Panou Admin rămâne în meniu dacă e admin
         if (currentUser.role === 'admin' && navMenuList) {
-            const adminLi = document.createElement('li');
-            adminLi.innerHTML = `<a href="admin.html" style="color: #ffcccc;">Panou Admin</a>`;
-            navMenuList.appendChild(adminLi);
+            // Verificăm să nu adăugăm butonul de mai multe ori la reîncărcări accidentale
+            if (!document.getElementById('admin-nav-link')) {
+                const adminLi = document.createElement('li');
+                adminLi.id = 'admin-nav-link';
+                adminLi.innerHTML = `<a href="admin.html" style="color: #ffcccc;">Panou Admin</a>`;
+                navMenuList.appendChild(adminLi);
+            }
         }
     }
 }
 
+// Executăm funcțiile în ordinea corectă la încărcare
+renderHomepageProducts();
 updateCartCount();
 checkLoggedInUser();
 startAutoSlide();

@@ -892,3 +892,42 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
 ::-webkit-reveal {
     display: none !important;
 }
+
+
+/* Forțează toate cardurile de produs să aibă aceeași structură flexibilă */
+.product-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Împinge butoanele mereu în partea de jos */
+    height: 100%; /* Le face egale ca înălțime dacă sunt pe același rând */
+    box-sizing: border-box;
+}
+
+/* Regula de aur pentru imagini de dimensiuni diferite */
+.product-card img {
+    width: 100%;         /* Ocupă toată lățimea disponibilă a casetei */
+    height: 200px;       /* Forțează o înălțime fixă identică pentru TOATE imaginile */
+    object-fit: cover;   /* Taie inteligent din margini (crop) fără să lungească sau să strivească imaginea */
+    object-position: center; /* Solicită centrarea focalizării pe mijlocul pozei */
+    border-radius: 4px;  /* Păstrează colțurile ușor rotunjite, dacă aveai deja */
+}
+
+/* Forțează titlul să aibă un spațiu fix, aliniind tot ce urmează sub el */
+.product-card h3 {
+    margin: 15px 0 10px 0;
+    font-size: 18px;         /* Ajustează dimensiunea fontului dacă e nevoie */
+    line-height: 1.3;
+    
+    display: flex;
+    align-items: center;     /* Centrează textul pe verticală în spațiul lui */
+    justify-content: center; /* Centrează textul pe orizontală */
+    
+    min-height: 54px;        /* Spațiu garantat pentru aproximativ 2-3 rânduri de text */
+    text-align: center;
+}
+
+/* Opțional: Ne asigurăm că și paragraful de preț are o așezare curată */
+.product-card .price {
+    margin-bottom: 15px;
+    font-weight: bold;
+}

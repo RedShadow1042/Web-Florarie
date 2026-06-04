@@ -1,231 +1,308 @@
-const adminMainContent = document.getElementById('admin-main-content');
-const addProductForm = document.getElementById('add-product-form');
-const adminOrdersActiveList = document.getElementById('admin-orders-active-list');
-const adminOrdersCompletedList = document.getElementById('admin-orders-completed-list');
-const adminCustomProductsList = document.getElementById('admin-custom-products-list');
-
-const searchActiveInput = document.getElementById('search-active-orders');
-const searchCompletedInput = document.getElementById('search-completed-orders');
-
-// 1. VERIFICARE SECURITATE
+// ==========================================
+// 1. SECURITATE ȘI ACCES PANEL
+// ==========================================
 const currentUser = JSON.parse(localStorage.getItem('floraria_current_user'));
+const adminMainContent = document.getElementById('admin-main-content');
 
 if (!currentUser || currentUser.role !== 'admin') {
-    alert('Acces interzis! Această pagină poate fi accesată doar de către un Administrator.');
+    alert('Acces interzis! Doar administratorii pot accesa această pagină.');
     window.location.href = 'index.html';
 } else {
-    adminMainContent.style.display = 'block';
-    renderAdminOrders();
-    renderCustomProductsList(); // Afișăm și lista de flori adăugate
-    setupTabNavigation();
-    setupSearchListeners();
+    if (adminMainContent) adminMainContent.style.display = 'block';
 }
 
-// 2. LOGICA TAB-URILOR
-function setupTabNavigation() {
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const sections = document.querySelectorAll('.admin-section');
+// ==========================================
+// 2. LOGICĂ SWITCH TAB-URI
+// ==========================================
+const tabButtons = document.querySelectorAll('.tab-btn');
+const adminSections = document.querySelectorAll('.admin-section');
 
-    tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            sections.forEach(sec => sec.classList.remove('active'));
+tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        tabButtons.forEach(b => b.classList.remove('active'));
+        adminSections.forEach(s => s.classList.remove('active'));
 
-            button.classList.add('active');
-            const targetSectionId = button.getAttribute('data-tab');
-            document.getElementById(targetSectionId).classList.add('active');
-        });
+        btn.classList.add('active');
+        const targetTab = btn.getAttribute('data-tab');
+        document.getElementById(targetTab).classList.add('active');
     });
+});
+
+// ==========================================
+// 3. CATALOG BUCHETE (DATE INITIALE ȘI MANAGEMENT)
+// ==========================================
+let bouquetsCatalog = JSON.parse(localStorage.getItem('floraria_bouquets')) || [
+    { id: "b1", name: "Buchet Elegant Trandafiri", price: "180 LEI", desc: "Trandafiri roșii rafinați", image: "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=400", onHomePage: true },
+    { id: "b2", name: "Buchet Multicolor Primăvară", price: "135 LEI", desc: "Flori diverse de primăvară", image: "https://images.unsplash.com/photo-1596436889106-be35e843f974?w=400", onHomePage: true },
+    { id: "b3", name: "Aranjament Delicatețe Roz", price: "150 LEI", desc: "Flori în nuanțe calde de roz", image: "https://images.unsplash.com/photo-1526047932273-341f2a7631f9?w=400", onHomePage: true },
+    { id: "b4", name: "Coș cu Flori de Câmp", price: "110 LEI", desc: "Un air rustic direct la tine acasă", image: "https://images.unsplash.com/photo-1587334206501-7c5e964efd7e?w=400", onHomePage: true },
+    { id: "b5", name: "Buchet Imperial Crini Albi", price: "210 LEI", desc: "Crini regali cu miros intens", image: "https://images.unsplash.com/photo-1533616688419-b7a585564566?w=400", onHomePage: true }
+];
+
+if (!localStorage.getItem('floraria_bouquets')) {
+    localStorage.setItem('floraria_bouquets', JSON.stringify(bouquetsCatalog));
 }
 
-function setupSearchListeners() {
-    if (searchActiveInput) {
-        searchActiveInput.addEventListener('input', () => {
-            const query = searchActiveInput.value.toLowerCase().trim();
-            renderAdminOrders(query, 'active');
-        });
-    }
-    if (searchCompletedInput) {
-        searchCompletedInput.addEventListener('input', () => {
-            const query = searchCompletedInput.value.toLowerCase().trim();
-            renderAdminOrders(query, 'completed');
-        });
-    }
-}
+const customProductsList = document.getElementById('admin-custom-products-list');
+const homepageCountBadge = document.getElementById('homepage-count');
+const addProductForm = document.getElementById('add-product-form');
 
-// 3. RANDAREA ȘI FILTRARE COMENZI
-function renderAdminOrders(query = '', target = 'all') {
-    if (!adminOrdersActiveList || !adminOrdersCompletedList) return;
+// Elemente pentru managementul imaginii curente din formular
+const imageInputEl = document.getElementById('prod-image');
+const clearImageBtn = document.getElementById('clear-image-btn');
 
-    const orders = JSON.parse(localStorage.getItem('floraria_orders')) || [];
-    
-    const activeQuery = query && target === 'active' ? query : (searchActiveInput ? searchActiveInput.value.toLowerCase().trim() : '');
-    const completedQuery = query && target === 'completed' ? query : (searchCompletedInput ? searchCompletedInput.value.toLowerCase().trim() : '');
+// Randare catalog buchete în Tab 1
+function renderAdminCatalog() {
+    if (!customProductsList) return;
+    customProductsList.innerHTML = '';
 
-    adminOrdersActiveList.innerHTML = '';
-    adminOrdersCompletedList.innerHTML = '';
+    const activeOnHome = bouquetsCatalog.filter(b => b.onHomePage).length;
+    if (homepageCountBadge) homepageCountBadge.textContent = activeOnHome;
 
-    let activeCount = 0;
-    let completedCount = 0;
-
-    [...orders].reverse().forEach((order) => {
-        const currentQuery = order.status === 'În așteptare' ? activeQuery : completedQuery;
-
-        if (currentQuery !== '') {
-            const matchId = order.id.toLowerCase().includes(currentQuery);
-            const matchName = order.customerName.toLowerCase().includes(currentQuery);
-            const matchEmail = order.customerEmail.toLowerCase().includes(currentQuery);
-            if (!matchId && !matchName && !matchEmail) return; 
-        }
-
-        const orderCard = document.createElement('div');
-        orderCard.className = 'order-card';
-
-        let productsHTML = '';
-        order.products.forEach(prod => {
-            productsHTML += `<li>🌸 ${prod.name} - ${prod.price} LEI</li>`;
-        });
-
-        let statusClass = 'status-asteptare';
-        if (order.status === 'Livrată') statusClass = 'status-livrata';
-        if (order.status === 'Anulată') statusClass = 'status-anulata';
-
-        orderCard.innerHTML = `
-            <div class="order-header">
-                <span class="order-id">${order.id}</span>
-                <span class="order-date">📅 ${order.date}</span>
-            </div>
-            <div class="admin-customer-info" style="margin: 10px 0; font-size: 14px; background: #f9f9f9; padding: 8px; border-radius:3px; text-align: left;">
-                👤 <strong>Client:</strong> ${order.customerName} <br>✉️ <strong>Email:</strong> ${order.customerEmail}
-            </div>
-            <ul class="order-products-list" style="text-align: left;">
-                ${productsHTML}
-            </ul>
-            <div class="order-footer">
-                <div>Total: <span class="order-total-bold">${order.totalPrice} LEI</span></div>
-                <span class="order-status ${statusClass}">${order.status}</span>
-            </div>
-            
-            ${order.status === 'În așteptare' ? `
-                <div class="admin-order-actions" style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
-                    <button class="btn-deliver" data-id="${order.id}" style="padding: 8px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Livrează</button>
-                    <button class="btn-cancel" data-id="${order.id}" style="padding: 8px 20px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Anulează</button>
-                </div>
-            ` : ''}
-        `;
-
-        if (order.status === 'În așteptare') {
-            adminOrdersActiveList.appendChild(orderCard);
-            activeCount++;
-        } else {
-            adminOrdersCompletedList.appendChild(orderCard);
-            completedCount++;
-        }
-    });
-
-    if (activeCount === 0) {
-        adminOrdersActiveList.innerHTML = `<p style="text-align: center; color: #666; padding: 20px;">${activeQuery !== '' ? 'Nu s-a găsit nicio comandă.' : 'Nu există comenzi active.'}</p>`;
-    }
-    if (completedCount === 0) {
-        adminOrdersCompletedList.innerHTML = `<p style="text-align: center; color: #666; padding: 20px;">${completedQuery !== '' ? 'Nu s-a găsit nicio comandă.' : 'Nu există comenzi finalizate.'}</p>`;
-    }
-
-    document.querySelectorAll('.btn-deliver').forEach(btn => {
-        btn.onclick = (e) => updateOrderStatus(e.target.getAttribute('data-id'), 'Livrată');
-    });
-
-    document.querySelectorAll('.btn-cancel').forEach(btn => {
-        btn.onclick = (e) => updateOrderStatus(e.target.getAttribute('data-id'), 'Anulată');
-    });
-}
-
-function updateOrderStatus(orderId, newStatus) {
-    let orders = JSON.parse(localStorage.getItem('floraria_orders')) || [];
-    const index = orders.findIndex(o => o.id === orderId);
-
-    if (index !== -1) {
-        orders[index].status = newStatus;
-        localStorage.setItem('floraria_orders', JSON.stringify(orders));
-        renderAdminOrders();
-    }
-}
-
-// 4. LOGICA PENTRU AFIȘAREA ȘI ȘTERGEREA PRODUSELOR ADĂUGATE
-function renderCustomProductsList() {
-    if (!adminCustomProductsList) return;
-    const customProducts = JSON.parse(localStorage.getItem('floraria_custom_products')) || [];
-    adminCustomProductsList.innerHTML = '';
-
-    if (customProducts.length === 0) {
-        adminCustomProductsList.innerHTML = `<p style="color: #777; font-size: 14px; text-align: center; padding: 10px;">Nu ai adăugat niciun buchet custom până acum.</p>`;
+    if (bouquetsCatalog.length === 0) {
+        customProductsList.innerHTML = '<p style="text-align:center; padding:15px; color:#666;">Catalogul este gol.</p>';
         return;
     }
 
-    customProducts.forEach(product => {
-        const item = document.createElement('div');
-        item.className = 'admin-product-item';
-        item.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <img src="${product.image}" alt="${product.name}">
+    bouquetsCatalog.forEach(bouquet => {
+        const itemRow = document.createElement('div');
+        itemRow.className = 'admin-product-item';
+        itemRow.style.borderLeft = bouquet.onHomePage ? '5px solid #769b21' : '1px solid #ddd';
+
+        itemRow.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                <img src="${bouquet.image}" alt="${bouquet.name}" onerror="this.src='https://placehold.co/50x50?text=Flori'">
                 <div>
-                    <strong style="font-size: 14px;">${product.name}</strong>
-                    <p style="margin: 2px 0 0 0; color: #5c1a23; font-weight: bold; font-size: 13px;">${product.price} LEI</p>
+                    <strong style="font-size: 14px; color:#333;">${bouquet.name}</strong>
+                    <p style="margin:2px 0 0 0; font-size:12px; color:#d15b76; font-weight:bold;">${bouquet.price}</p>
                 </div>
             </div>
-            <button class="btn-delete" data-id="${product.id}">Șterge</button>
+            
+            <div style="display: flex; align-items: center; gap: 15px; margin-right: 10px;">
+                <label style="font-size: 11px; font-weight: bold; color: #555; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                    <input type="checkbox" ${bouquet.onHomePage ? 'checked' : ''} 
+                        style="width: 18px; height: 18px; cursor: pointer;"
+                        onchange="toggleBouquetHomepage('${bouquet.id}', this)">
+                    Prima pagină
+                </label>
+                <button class="btn-delete" onclick="deleteBouquet('${bouquet.id}')">Șterge</button>
+            </div>
         `;
-        adminCustomProductsList.appendChild(item);
-    });
-
-    document.querySelectorAll('.btn-delete').forEach(btn => {
-        btn.onclick = (e) => deleteProduct(e.target.getAttribute('data-id'));
+        customProductsList.appendChild(itemRow);
     });
 }
 
-function deleteProduct(productId) {
-    if (confirm('Ești sigur că vrei să ștergi definitiv acest buchet de pe site?')) {
-        let customProducts = JSON.parse(localStorage.getItem('floraria_custom_products')) || [];
-        customProducts = customProducts.filter(p => p.id !== parseInt(productId));
-        localStorage.setItem('floraria_custom_products', JSON.stringify(customProducts));
-        renderCustomProductsList();
+// Comutare Casete pe Prima Pagină (Limită de Max 5)
+window.toggleBouquetHomepage = function(id, checkbox) {
+    const bouquet = bouquetsCatalog.find(b => b.id === id);
+    if (!bouquet) return;
+
+    if (checkbox.checked) {
+        const currentActive = bouquetsCatalog.filter(b => b.onHomePage).length;
+        if (currentActive >= 5) {
+            alert('Poți selecta maxim 5 buchete pentru prima pagină! Dezbifează unul existent mai întâi.');
+            checkbox.checked = false;
+            return;
+        }
+        bouquet.onHomePage = true;
+    } else {
+        bouquet.onHomePage = false;
     }
+
+    localStorage.setItem('floraria_bouquets', JSON.stringify(bouquetsCatalog));
+    renderAdminCatalog();
+};
+
+// Ștergerea unui buchet din catalog
+window.deleteBouquet = function(id) {
+    if (confirm('Sigur vrei să ștergi definitiv acest buchet din catalog?')) {
+        bouquetsCatalog = bouquetsCatalog.filter(b => b.id !== id);
+        localStorage.setItem('floraria_bouquets', JSON.stringify(bouquetsCatalog));
+        renderAdminCatalog();
+    }
+};
+
+// Control afișare și ștergere imagine din formular (Butonul nou adăugat)
+if (imageInputEl && clearImageBtn) {
+    imageInputEl.addEventListener('change', () => {
+        if (imageInputEl.files.length > 0) {
+            clearImageBtn.style.display = 'block';
+        } else {
+            clearImageBtn.style.display = 'none';
+        }
+    });
+
+    clearImageBtn.addEventListener('click', () => {
+        imageInputEl.value = ''; // Resetează fișierul din formular
+        clearImageBtn.style.display = 'none'; // Ascunde butonul roșu
+    });
 }
 
-// 5. ADĂUGARE PRODUS NOU
+// Adăugare buchet nou citind fișierul local din dispozitiv
 if (addProductForm) {
     addProductForm.addEventListener('submit', (e) => {
         e.preventDefault();
+        
+        const name = document.getElementById('prod-name').value.trim();
+        let price = document.getElementById('prod-price').value.trim();
+        const desc = document.getElementById('prod-desc').value.trim();
 
-        const name = document.getElementById('prod-name').value;
-        const price = parseInt(document.getElementById('prod-price').value);
-        const desc = document.getElementById('prod-desc').value;
-        const imageFile = document.getElementById('prod-image').files[0];
-
-        if (!imageFile) {
-            alert('Te rugăm să selectezi o imagine!');
+        if (imageInputEl.files.length === 0) {
+            alert('Te rugăm să selectezi o imagine din dispozitiv.');
             return;
         }
 
+        const file = imageInputEl.files[0];
         const reader = new FileReader();
-        reader.onload = function(event) {
-            const base64Image = event.target.result;
 
-            const newProduct = {
-                id: Date.now(),
+        // Convertirea imaginii în format text Base64 pentru a fi acceptată de localStorage
+        reader.onloadend = function () {
+            const base64ImageString = reader.result;
+
+            const newBouquet = {
+                id: "b_" + Date.now(),
                 name: name,
-                price: price,
-                description: desc,
-                image: base64Image
+                price: price.toUpperCase().includes('LEI') ? price : price + " LEI",
+                desc: desc,
+                image: base64ImageString,
+                onHomePage: false
             };
 
-            let customProducts = JSON.parse(localStorage.getItem('floraria_custom_products')) || [];
-            customProducts.push(newProduct);
-            localStorage.setItem('floraria_custom_products', JSON.stringify(customProducts));
-
-            alert(`Produsul "${name}" a fost adăugat cu succes!`);
+            bouquetsCatalog.push(newBouquet);
+            localStorage.setItem('floraria_bouquets', JSON.stringify(bouquetsCatalog));
+            
+            alert(`Buchetul "${name}" a fost salvat cu succes în memoria locală!`);
+            
+            // Resetăm formularul și ascundem butonul roșu de ștergere imagine
             addProductForm.reset();
-            renderCustomProductsList(); // Reîmprospătăm lista imediat după adăugare
+            if (clearImageBtn) clearImageBtn.style.display = 'none';
+            
+            renderAdminCatalog();
         };
-        reader.readAsDataURL(imageFile);
+
+        reader.readAsDataURL(file);
     });
 }
+
+// ==========================================
+// 4. MANAGEMENT COMENZI (ACTIVE ȘI FINALIZATE)
+// ==========================================
+let ordersList = JSON.parse(localStorage.getItem('floraria_orders')) || [];
+
+const activeOrdersContainer = document.getElementById('admin-orders-active-list');
+const completedOrdersContainer = document.getElementById('admin-orders-completed-list');
+
+function renderAdminOrders(filterActiveText = '', filterCompletedText = '') {
+    if (!activeOrdersContainer || !completedOrdersContainer) return;
+    activeOrdersContainer.innerHTML = '';
+    completedOrdersContainer.innerHTML = '';
+
+    const activeOrders = ordersList.filter(o => o.status === 'asteptare' || o.status === 'În așteptare' || !o.status);
+    const completedOrders = ordersList.filter(o => o.status === 'livrata' || o.status === 'Livrată' || o.status === 'anulata' || o.status === 'Anulată');
+
+    const filteredActive = activeOrders.filter(o => 
+        o.id.toLowerCase().includes(filterActiveText.toLowerCase()) ||
+        o.customerName.toLowerCase().includes(filterActiveText.toLowerCase()) ||
+        o.customerEmail.toLowerCase().includes(filterActiveText.toLowerCase())
+    );
+
+    if (filteredActive.length === 0) {
+        activeOrdersContainer.innerHTML = '<p style="text-align:center; color:#666; padding:15px;">Nu s-au găsit comenzi active.</p>';
+    } else {
+        filteredActive.forEach(order => activeOrdersContainer.appendChild(createOrderCard(order)));
+    }
+
+    const filteredCompleted = completedOrders.filter(o => 
+        o.id.toLowerCase().includes(filterCompletedText.toLowerCase()) ||
+        o.customerName.toLowerCase().includes(filterCompletedText.toLowerCase()) ||
+        o.customerEmail.toLowerCase().includes(filterCompletedText.toLowerCase())
+    );
+
+    if (filteredCompleted.length === 0) {
+        completedOrdersContainer.innerHTML = '<p style="text-align:center; color:#666; padding:15px;">Nu s-au găsit comenzi în istoric.</p>';
+    } else {
+        filteredCompleted.forEach(order => completedOrdersContainer.appendChild(createOrderCard(order)));
+    }
+}
+
+function createOrderCard(order) {
+    const card = document.createElement('div');
+    card.className = 'order-card';
+    card.style.background = '#fcf9f5';
+    card.style.border = '1px solid #eadecf';
+    card.style.borderRadius = '8px';
+    card.style.padding = '15px';
+    card.style.marginBottom = '15px';
+
+    let statusClass = 'status-asteptare';
+    let statusText = 'În așteptare';
+    
+    if (order.status === 'livrata' || order.status === 'Livrată') { statusClass = 'status-livrata'; statusText = 'Livrată'; }
+    if (order.status === 'anulata' || order.status === 'Anulată') { statusClass = 'status-anulata'; statusText = 'Anulată'; }
+
+    // Generăm lista de produse asociate comenzii
+    let itemsHtml = '';
+    if (order.products && Array.isArray(order.products)) {
+        itemsHtml = order.products.map(item => `<li>${item.name} x ${item.quantity || 1} (${item.price} LEI)</li>`).join('');
+    } else if (order.items && Array.isArray(order.items)) {
+        itemsHtml = order.items.map(item => `<li>${item.name} x ${item.quantity || 1} (${item.price})</li>`).join('');
+    }
+
+    const finalTotal = order.totalPrice !== undefined ? order.totalPrice + " LEI" : order.total;
+
+    card.innerHTML = `
+        <div class="order-header" style="display:flex; justify-content:space-between; border-bottom:1px solid #eadecf; padding-bottom:8px; margin-bottom:10px;">
+            <span class="order-id" style="font-weight:bold; color:#5c1a23;">Comandă #${order.id}</span>
+            <span class="order-date" style="font-size:13px; color:#666;">${order.date}</span>
+        </div>
+        <div class="admin-customer-info" style="font-size:13px; color:#555; background:#f0e6db; padding:8px; border-radius:4px; margin-bottom:10px; line-height:1.5;">
+            <strong>Client:</strong> ${order.customerName} (${order.customerEmail})<br>
+            <strong>Adresă Livrare:</strong> ${order.address || 'Nespecificată'}
+        </div>
+        <ul class="order-products-list" style="padding-left:20px; font-size:14px; margin-bottom:12px; color:#333;">
+            ${itemsHtml}
+        </ul>
+        <div class="order-footer" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>Status: <span class="order-status ${statusClass}" style="font-weight:bold; text-transform:uppercase; font-size:12px;">${statusText}</span></div>
+            <div class="order-total-bold" style="font-weight:bold; color:#d15b76; font-size:16px;">Total: ${finalTotal}</div>
+        </div>
+        ${order.status === 'asteptare' || order.status === 'În așteptare' || !order.status ? `
+            <div class="admin-order-actions" style="display:flex; gap:10px; margin-top:12px; border-top:1px dashed #eadecf; padding-top:10px;">
+                <button class="view-details btn-small" style="background:#28a745; border:none; padding:6px 12px; color:white; border-radius:4px; cursor:pointer;" onclick="updateStatus('${order.id}', 'livrata')">Marchează Livrată</button>
+                <button class="view-details btn-small" style="background:#dc3545; border:none; padding:6px 12px; color:white; border-radius:4px; cursor:pointer;" onclick="updateStatus('${order.id}', 'anulata')">Anulează Comandă</button>
+            </div>
+        ` : ''}
+    `;
+    return card;
+}
+
+window.updateStatus = function(id, newStatus) {
+    const order = ordersList.find(o => o.id === id);
+    if (order) {
+        order.status = newStatus;
+        localStorage.setItem('floraria_orders', JSON.stringify(ordersList));
+        renderAdminOrders();
+    }
+};
+
+// Căutare dinamică în tab-urile de comenzi
+const searchActiveInput = document.getElementById('search-active-orders');
+const searchCompletedInput = document.getElementById('search-completed-orders');
+
+if (searchActiveInput) {
+    searchActiveInput.addEventListener('input', (e) => {
+        const completedVal = searchCompletedInput ? searchCompletedInput.value : '';
+        renderAdminOrders(e.target.value, completedVal);
+    });
+}
+
+if (searchCompletedInput) {
+    searchCompletedInput.addEventListener('input', (e) => {
+        const activeVal = searchActiveInput ? searchActiveInput.value : '';
+        renderAdminOrders(activeVal, e.target.value);
+    });
+}
+
+// Inițializare aplicație admin
+renderAdminCatalog();
+renderAdminOrders();

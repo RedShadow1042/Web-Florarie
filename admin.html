@@ -125,6 +125,7 @@
     <main class="site-content" style="display: none;" id="admin-main-content">
         <div class="admin-centered-container">
             
+            <!-- SECTIUNEA 1: ADAUGARE / STERGERE / SELECTIONARE 5 PRODUSE -->
             <div id="add-bouquet-sec" class="admin-section active">
                 <div class="cart-container admin-box">
                     <h2>Adaugă un buchet nou</h2>
@@ -138,8 +139,9 @@
                             <input type="number" id="prod-price" required min="1" placeholder="Ex: 150">
                         </div>
                         <div class="input-group">
-                            <label for="prod-image">Imagine Buchet (Obligatorie)</label>
+                            <label for="prod-image">Imagine Buchet</label>
                             <input type="file" id="prod-image" accept="image/*" required style="padding: 10px 0;">
+                            <button type="button" id="clear-image-btn" style="display: none; background: #dc3545; color: white; border: none; padding: 5px 10px; font-size: 12px; border-radius: 4px; cursor: pointer; margin-top: 5px; width: fit-content;">✕ Șterge imaginea selectată</button>
                         </div>
                         <div class="input-group">
                             <label for="prod-desc">Descriere Produs</label>
@@ -151,11 +153,17 @@
 
                 <div class="cart-container admin-box">
                     <h2>Buchetele adăugate</h2>
+                    <p style="color: #666; font-size: 13px; margin-bottom: 15px; text-align: center;">
+                        Bifează maxim 5 buchete pentru a le trimite pe Pagina Principală: 
+                        (<span id="homepage-count" style="font-weight: bold; color: #769b21;">0</span>/5 selectate)
+                    </p>
                     <div id="admin-custom-products-list">
-                        </div>
+                        <!-- Elementele se generează din JavaScript -->
+                    </div>
                 </div>
             </div>
 
+            <!-- SECTIUNEA 2: COMENZI ACTIVE -->
             <div id="active-orders-sec" class="admin-section">
                 <div class="admin-search-wrapper">
                     <input type="text" id="search-active-orders" class="admin-search-input" placeholder="🔍 Caută după ID comandă, nume sau email client...">
@@ -166,6 +174,7 @@
                 </div>
             </div>
 
+            <!-- SECTIUNEA 3: ISTORIC COMENZI FINALIZATE -->
             <div id="completed-orders-sec" class="admin-section">
                 <div class="admin-search-wrapper">
                     <input type="text" id="search-completed-orders" class="admin-search-input" placeholder="🔍 Caută după ID comandă, nume sau email client...">
