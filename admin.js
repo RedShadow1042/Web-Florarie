@@ -31,13 +31,7 @@ tabButtons.forEach(btn => {
 // ==========================================
 // 3. CATALOG BUCHETE (DATE INITIALE ȘI MANAGEMENT)
 // ==========================================
-let bouquetsCatalog = JSON.parse(localStorage.getItem('floraria_bouquets')) || [
-    { id: "b1", name: "Buchet Elegant Trandafiri", price: "180 LEI", desc: "Trandafiri roșii rafinați", image: "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=400", onHomePage: true },
-    { id: "b2", name: "Buchet Multicolor Primăvară", price: "135 LEI", desc: "Flori diverse de primăvară", image: "https://images.unsplash.com/photo-1596436889106-be35e843f974?w=400", onHomePage: true },
-    { id: "b3", name: "Aranjament Delicatețe Roz", price: "150 LEI", desc: "Flori în nuanțe calde de roz", image: "https://images.unsplash.com/photo-1526047932273-341f2a7631f9?w=400", onHomePage: true },
-    { id: "b4", name: "Coș cu Flori de Câmp", price: "110 LEI", desc: "Un air rustic direct la tine acasă", image: "https://images.unsplash.com/photo-1587334206501-7c5e964efd7e?w=400", onHomePage: true },
-    { id: "b5", name: "Buchet Imperial Crini Albi", price: "210 LEI", desc: "Crini regali cu miros intens", image: "https://images.unsplash.com/photo-1533616688419-b7a585564566?w=400", onHomePage: true }
-];
+let bouquetsCatalog = JSON.parse(localStorage.getItem('floraria_bouquets')) || [];
 
 if (!localStorage.getItem('floraria_bouquets')) {
     localStorage.setItem('floraria_bouquets', JSON.stringify(bouquetsCatalog));
