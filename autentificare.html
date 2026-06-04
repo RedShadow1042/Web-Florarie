@@ -31,7 +31,7 @@
                             <strong>Nume complet:</strong>
                             <p id="display-name">-</p>
                         </div>
-                        <button class="view-details btn-small" id="open-name-modal">Modifică</button>
+                        <button class="view-details btn-small" id="open-modal-name">Modifică</button>
                     </div>
 
                     <div class="profile-data-item">
@@ -39,76 +39,22 @@
                             <strong>Adresă Email:</strong>
                             <p id="display-email">-</p>
                         </div>
-                        <button class="view-details btn-small" id="open-email-modal">Modifică</button>
+                        <button class="view-details btn-small" id="open-modal-email">Modifică</button>
                     </div>
 
                     <div class="profile-data-item">
                         <div>
-                            <strong>Parolă cont:</strong>
-                            <p>********</p>
+                            <strong>Securitate Cont:</strong>
+                            <p>••••••••••••</p>
                         </div>
-                        <button class="view-details btn-small" id="open-password-modal">Modifică</button>
+                        <button class="view-details btn-small" id="open-modal-password">Schimbă Parola</button>
                     </div>
                 </div>
 
-                <hr style="border: none; border-top: 1px solid #f5ebe1; margin: 25px 0;">
-                
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <button id="logout-btn" class="add-to-cart" style="width: 100%;">Ieși din cont (Log Out)</button>
-                    <button id="delete-acc-btn" class="add-to-cart" style="width: 100%; background-color: #ff4d4d; color: white; border-color: #cc0000;">Șterge definitiv contul</button>
+                <div class="profile-actions-area" style="margin-top: 30px; display: flex; flex-direction: column; gap: 12px; width: 100%;">
+                    <button class="btn-profile-action btn-logout" id="logout-btn">Deconectare Cont</button>
+                    <button class="btn-profile-action btn-delete-account" id="delete-account-btn">Șterge Contul Definitiv</button>
                 </div>
-            </div>
-        </div>
-
-        <div id="modal-name" class="modal-overlay">
-            <div class="modal-box">
-                <h3>Modifică Numele</h3>
-                <form id="form-change-name">
-                    <div class="input-group">
-                        <label for="new-name">Nume nou complet</label>
-                        <input type="text" id="new-name" required>
-                    </div>
-                    <div class="modal-buttons">
-                        <button type="button" class="add-to-cart btn-close-modal">Anulează</button>
-                        <button type="submit" class="view-details">Salvează</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div id="modal-email" class="modal-overlay">
-            <div class="modal-box">
-                <h3>Modifică Email-ul</h3>
-                <form id="form-change-email">
-                    <div class="input-group">
-                        <label for="new-email">Adresă nouă de email</label>
-                        <input type="email" id="new-email" required>
-                    </div>
-                    <div class="modal-buttons">
-                        <button type="button" class="add-to-cart btn-close-modal">Anulează</button>
-                        <button type="submit" class="view-details">Salvează</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div id="modal-password" class="modal-overlay">
-            <div class="modal-box">
-                <h3>Modifică Parola</h3>
-                <form id="form-change-password">
-                    <div class="input-group">
-                        <label for="old-password">Parola actuală (veche)</label>
-                        <input type="password" id="old-password" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="new-password">Parola nouă</label>
-                        <input type="password" id="new-password" required>
-                    </div>
-                    <div class="modal-buttons">
-                        <button type="button" class="add-to-cart btn-close-modal">Anulează</button>
-                        <button type="submit" class="view-details">Salvează</button>
-                    </div>
-                </form>
             </div>
         </div>
 
@@ -122,7 +68,8 @@
                     </div>
                     <div class="input-group">
                         <label for="login-password">Parolă</label>
-                        <input type="password" id="login-password" required>
+                        <input type="password" id="login-password" required style="padding-right: 65px;">
+                        <span class="toggle-password-eye" onclick="togglePasswordVisibility('login-password')"></span>
                     </div>
                     <button type="submit" class="view-details">Intră în cont</button>
                 </form>
@@ -141,7 +88,8 @@
                     </div>
                     <div class="input-group">
                         <label for="reg-password">Parolă</label>
-                        <input type="password" id="reg-password" required>
+                        <input type="password" id="reg-password" required style="padding-right: 65px;">
+                        <span class="toggle-password-eye" onclick="togglePasswordVisibility('reg-password')"></span>
                     </div>
                     <div class="input-group checkbox-group">
                         <input type="checkbox" id="reg-is-admin">

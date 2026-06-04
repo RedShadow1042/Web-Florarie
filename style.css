@@ -372,6 +372,7 @@ body {
     display: flex;
     flex-direction: column;
     margin-bottom: 15px;
+    position: relative; /* Necesar pentru alinierea absolută a butonului */
 }
 
 .input-group label {
@@ -389,6 +390,7 @@ body {
     border-radius: 4px;
     font-size: 16px;
     outline: none;
+    width: 100%;
 }
 
 .input-group input:focus {
@@ -489,7 +491,6 @@ body {
     color: #5c1a23;
 }
 
-/* Stiluri pentru lista de date din profil */
 .profile-data-list {
     display: flex;
     flex-direction: column;
@@ -524,15 +525,14 @@ body {
     margin-top: 0 !important;
 }
 
-/* Stiluri Structură Pop-up (Modal) */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Fundal întunecat transparent */
-    display: none; /* Ascuns implicit */
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
     justify-content: center;
     align-items: center;
     z-index: 9999;
@@ -571,7 +571,6 @@ body {
     to { transform: scale(1); opacity: 1; }
 }
 
-/* Stiluri pentru pagina de comenzi client */
 .order-card {
     background-color: #fcf9f5;
     border: 1px solid #eadecf;
@@ -633,7 +632,6 @@ body {
     text-transform: uppercase;
 }
 
-/* Culori pentru statusul comenzii */
 .status-asteptare {
     background-color: #ffe6cc;
     color: #b35c00;
@@ -647,7 +645,6 @@ body {
     color: #721c24;
 }
 
-/* Stiluri specifice pentru Panoul de Admin */
 .admin-grid {
     display: flex;
     flex-direction: column;
@@ -780,4 +777,118 @@ body {
     .benefit-item {
         min-width: 100%;
     }
+}
+
+@media (max-width: 600px) {
+    .profile-data-item {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        padding: 15px !important;
+    }
+
+    .profile-data-item button {
+        width: 100% !important;
+        text-align: center !important;
+        padding: 10px 0 !important;
+        margin-top: 5px;
+    }
+}
+
+.btn-profile-action {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    border: none;
+    text-align: center;
+}
+
+.btn-logout {
+    background-color: #5c1a23;
+    color: #ffffff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.btn-logout:hover {
+    background-color: #441219;
+}
+
+.btn-delete-account {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.btn-delete-account:hover {
+    background-color: #f5c6cb;
+    color: #491217;
+}
+
+.btn-profile-action:active {
+    transform: scale(0.98);
+}
+
+.admin-badge {
+    display: inline-block !important;
+    font-size: 11px !important;
+    background: #5c1a23;
+    color: white !important;
+    padding: 2px 6px !important;
+    border-radius: 3px !important;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+/* =======================================================
+   STILIZARE CORECTĂ: TEXTUL "Arată/Ascunde" CENTRAT PERFECT PE VERTICALĂ
+   ======================================================= */
+.toggle-password-eye {
+    position: absolute;
+    right: 12px;
+    /* Poziționăm elementul la exact 50% din înălțimea părintelui */
+    top: 50%; 
+    /* Translatăm înapoi cu jumătate din propria lui înălțime + compensăm fin pentru label */
+    transform: translateY(-10%); 
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: #769b21; /* Verdele florăriei */
+    user-select: none;
+    padding: 2px 6px;
+    transition: color 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-password-eye:hover {
+    color: #5c1a23; /* Vișiniu la hover */
+}
+
+/* Textul curat generat prin CSS */
+.toggle-password-eye::before {
+    content: "Arată";
+    font-family: Arial, sans-serif;
+}
+
+.toggle-password-eye.visible::before {
+    content: "Ascunde";
+}
+
+/* Dezactivează pictogramele native din browsere pentru a evita dublarea */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input[type="password"]::-webkit-contacts-auto-fill-button,
+input[type="password"]::-webkit-credentials-auto-fill-button {
+    display: none !important;
+}
+
+::-webkit-reveal {
+    display: none !important;
 }

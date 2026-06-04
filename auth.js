@@ -5,158 +5,47 @@ const authFormsContainer = document.getElementById('auth-forms');
 const loggedInPanel = document.getElementById('logged-in-panel');
 const welcomeMessage = document.getElementById('welcome-message');
 
-// Elemente pentru afișarea datelor curente
 const displayName = document.getElementById('display-name');
 const displayEmail = document.getElementById('display-email');
-
-// Selectăm Pop-up-urile (Modalele)
-const modalName = document.getElementById('modal-name');
-const modalEmail = document.getElementById('modal-email');
-const modalPassword = document.getElementById('modal-password');
 
 let users = JSON.parse(localStorage.getItem('floraria_users')) || [];
 let currentUser = JSON.parse(localStorage.getItem('floraria_current_user'));
 
-// FUNCȚIE PENTRU VERIFICAREA STĂRII PAGINII ȘI POPULAREA INTERFEȚEI
+// Comută vizibilitatea parolei adăugând/eliminând clasa controlată de CSS
+function togglePasswordVisibility(inputId) {
+    const passwordInput = document.getElementById(inputId);
+    if (!passwordInput) return;
+    
+    const eyeIcon = passwordInput.nextElementSibling;
+    
+    if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        if (eyeIcon && eyeIcon.classList.contains('toggle-password-eye')) {
+            eyeIcon.classList.add('visible'); // Schimbă textul în "Ascunde"
+        }
+    } else {
+        passwordInput.type = "password";
+        if (eyeIcon && eyeIcon.classList.contains('toggle-password-eye')) {
+            eyeIcon.classList.remove('visible'); // Revine la textul "Arată"
+        }
+    }
+}
+
 function toggleAuthInterface() {
     if (currentUser) {
         if (authFormsContainer) authFormsContainer.style.display = 'none';
         if (loggedInPanel) loggedInPanel.style.display = 'flex';
         if (welcomeMessage) welcomeMessage.textContent = `Salut, ${currentUser.name}!`;
 
-        // Afișăm datele text în listă
         if (displayName) displayName.textContent = currentUser.name;
         if (displayEmail) displayEmail.textContent = currentUser.email;
 
-        // --- EVENIMENTE DESCHIDERE POP-UP-URI ---
-        document.getElementById('open-name-modal').onclick = () => {
-            document.getElementById('new-name').value = currentUser.name;
-            modalName.style.display = 'flex';
-        };
-        
-        document.getElementById('open-email-modal').onclick = () => {
-            document.getElementById('new-email').value = currentUser.email;
-            modalEmail.style.display = 'flex';
-        };
-        
-        document.getElementById('open-password-modal').onclick = () => {
-            // Resetăm căsuțele de parole la deschidere ca să fie goale
-            document.getElementById('old-password').value = '';
-            document.getElementById('new-password').value = '';
-            modalPassword.style.display = 'flex';
-        };
-
-        // --- EVENIMENTE ÎNCHIDERE POP-UP-URI (Butoanele Anulează) ---
-        document.querySelectorAll('.btn-close-modal').forEach(button => {
-            button.onclick = () => {
-                modalName.style.display = 'none';
-                modalEmail.style.display = 'none';
-                modalPassword.style.display = 'none';
-            };
-        });
-
-        // Logica pentru butonul de Log Out
-        const logoutBtn = document.getElementById('logout-btn');
-        if (logoutBtn) {
-            logoutBtn.onclick = () => {
-                localStorage.removeItem('floraria_current_user');
-                alert('Te-ai deconectat cu succes!');
-                window.location.href = 'index.html';
-            };
-        }
-
-        // Logica pentru butonul de Ștergere Cont
-        const deleteBtn = document.getElementById('delete-acc-btn');
-        if (deleteBtn) {
-            deleteBtn.onclick = () => {
-                if (confirm('Ești absolut sigur că vrei să îți ștergi definitiv contul?')) {
-                    let allUsers = JSON.parse(localStorage.getItem('floraria_users')) || [];
-                    allUsers = allUsers.filter(user => user.email !== currentUser.email);
-                    localStorage.setItem('floraria_users', JSON.stringify(allUsers));
-                    localStorage.removeItem('floraria_current_user');
-                    alert('Contul tău a fost șters definitiv.');
-                    window.location.href = 'index.html';
-                }
-            };
-        }
+        setupProfileModals();
     } else {
         if (authFormsContainer) authFormsContainer.style.display = 'flex';
         if (loggedInPanel) loggedInPanel.style.display = 'none';
     }
 }
-
-// Funcție ajutătoare pentru actualizarea bazei de date globale și a sesiunii
-function saveUserData(updatedFields) {
-    let allUsers = JSON.parse(localStorage.getItem('floraria_users')) || [];
-    const userIndex = allUsers.findIndex(user => user.email === currentUser.email);
-
-    if (userIndex !== -1) {
-        // Actualizăm câmpurile în lista generală
-        allUsers[userIndex] = { ...allUsers[userIndex], ...updatedFields };
-        localStorage.setItem('floraria_users', JSON.stringify(allUsers));
-
-        // Actualizăm câmpurile în sesiunea curentă
-        currentUser = { ...currentUser, ...updatedFields };
-        localStorage.setItem('floraria_current_user', JSON.stringify(currentUser));
-        
-        alert('Modificare salvată cu succes!');
-        
-        // Închidem toate pop-up-urile și reîmprospătăm interfața
-        modalName.style.display = 'none';
-        modalEmail.style.display = 'none';
-        modalPassword.style.display = 'none';
-        toggleAuthInterface();
-    }
-}
-
-// --- LOGICA SALVĂRII DIN POP-UP-URI ---
-
-// 1. Schimbare Nume
-document.getElementById('form-change-name').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const val = document.getElementById('new-name').value;
-    saveUserData({ name: val });
-});
-
-// 2. Schimbare Email
-document.getElementById('form-change-email').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const val = document.getElementById('new-email').value;
-
-    let allUsers = JSON.parse(localStorage.getItem('floraria_users')) || [];
-    const emailTaken = allUsers.some(user => user.email === val && user.email !== currentUser.email);
-
-    if (emailTaken) {
-        alert('Acest email este deja utilizat de altcineva!');
-        return;
-    }
-    saveUserData({ email: val });
-});
-
-// 3. Schimbare Parolă (CU VERIFICARE PAROLĂ VECHE)
-document.getElementById('form-change-password').addEventListener('submit', (e) => {
-    e.preventDefault();
-    
-    const oldPasswordInput = document.getElementById('old-password').value;
-    const newPasswordInput = document.getElementById('new-password').value;
-
-    // Verificăm dacă parola veche introdusă coincide cu cea din cont
-    if (oldPasswordInput !== currentUser.password) {
-        alert('Parola actuală este incorectă! Modificarea a fost respinsă.');
-        return;
-    }
-
-    // Verificăm dacă noua parolă nu este identică cu cea veche
-    if (oldPasswordInput === newPasswordInput) {
-        alert('Noua parolă nu poate fi identică cu cea veche!');
-        return;
-    }
-
-    saveUserData({ password: newPasswordInput });
-});
-
-
-// --- LOGICA DIN FORMULARELE INIȚIALE (LOGIN / REGISTER) ---
 
 if (registerForm) {
     registerForm.addEventListener('submit', (event) => {
@@ -166,7 +55,6 @@ if (registerForm) {
         const password = document.getElementById('reg-password').value;
         const isAdmin = document.getElementById('reg-is-admin').checked;
 
-        // Reîncărcăm utilizatorii din local storage ca să fim la zi
         let currentUsers = JSON.parse(localStorage.getItem('floraria_users')) || [];
         const userExists = currentUsers.some(user => user.email === email);
         
@@ -178,12 +66,16 @@ if (registerForm) {
         const newUser = { name, email, password, role: isAdmin ? 'admin' : 'customer' };
         currentUsers.push(newUser);
         localStorage.setItem('floraria_users', JSON.stringify(currentUsers));
+        localStorage.setItem('floraria_current_user', JSON.stringify(newUser));
 
-        alert('Contul a fost creat cu succes! Te poți conecta acum.');
+        alert(`Contul a fost creat cu succes! Bine ai venit, ${name}!`);
         registerForm.reset();
         
-        // Actualizăm și variabila locală globală
-        users = currentUsers;
+        if (newUser.role === 'admin') {
+            window.location.href = 'admin.html';
+        } else {
+            window.location.href = 'index.html';
+        }
     });
 }
 
@@ -203,9 +95,104 @@ if (loginForm) {
 
         localStorage.setItem('floraria_current_user', JSON.stringify(userFound));
         alert(`Bine ai revenit, ${userFound.name}!`);
+        
         window.location.href = 'index.html';
     });
 }
 
-// Lansăm funcția la încărcarea paginii
+const logoutBtn = document.getElementById('logout-btn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('floraria_current_user');
+        alert('Te-ai deconectat cu succes.');
+        window.location.href = 'index.html';
+    });
+}
+
+const deleteAccountBtn = document.getElementById('delete-account-btn');
+if (deleteAccountBtn) {
+    deleteAccountBtn.addEventListener('click', () => {
+        const confirmFirst = confirm("Ești absolut sigur că vrei să îți ștergi contul? Această acțiune este ireversibilă și vei pierde istoricul!");
+        
+        if (confirmFirst) {
+            const confirmSecond = prompt("Pentru confirmare finală, scrie cuvântul 'STERGE':");
+            
+            if (confirmSecond === "STERGE" || confirmSecond === "sterge") {
+                let allUsers = JSON.parse(localStorage.getItem('floraria_users')) || [];
+                allUsers = allUsers.filter(u => u.email !== currentUser.email);
+                localStorage.setItem('floraria_users', JSON.stringify(allUsers));
+                localStorage.removeItem('floraria_current_user');
+                
+                alert('Contul tău a fost eliminat definitiv.');
+                window.location.href = 'index.html';
+            } else if (confirmSecond !== null) {
+                alert('Confirmare respinsă. Textul introdus este greșit.');
+            }
+        }
+    });
+}
+
+function setupProfileModals() {
+    const btnName = document.getElementById('open-modal-name');
+    const btnEmail = document.getElementById('open-modal-email');
+    const btnPass = document.getElementById('open-modal-password');
+
+    if (btnName) {
+        btnName.onclick = () => {
+            const newName = prompt("Introdu noul tău nume complet:", currentUser.name);
+            if (newName && newName.trim() !== "") {
+                updateUserData('name', newName.trim());
+            }
+        };
+    }
+
+    if (btnEmail) {
+        btnEmail.onclick = () => {
+            const newEmail = prompt("Introdu noua adresă de email:", currentUser.email);
+            if (newEmail && newEmail.trim() !== "") {
+                let allUsers = JSON.parse(localStorage.getItem('floraria_users')) || [];
+                const emailTaken = allUsers.some(u => u.email === newEmail.trim() && u.email !== currentUser.email);
+                
+                if (emailTaken) {
+                    alert("Acest email este deja folosit de alt cont!");
+                } else {
+                    updateUserData('email', newEmail.trim());
+                }
+            }
+        };
+    }
+
+    if (btnPass) {
+        btnPass.onclick = () => {
+            const oldPass = prompt("Introdu parola curentă pentru verificare:");
+            if (oldPass === currentUser.password) {
+                const newPass = prompt("Introdu noua parolă dorită:");
+                if (newPass && newPass.trim().length >= 4) {
+                    updateUserData('password', newPass.trim());
+                    alert("Parola a fost modificată cu succes!");
+                } else {
+                    alert("Parola este prea scurtă (minim 4 caractere).");
+                }
+            } else if (oldPass !== null) {
+                alert("Parola curentă este incorectă!");
+            }
+        };
+    }
+}
+
+function updateUserData(key, newValue) {
+    let allUsers = JSON.parse(localStorage.getItem('floraria_users')) || [];
+    const index = allUsers.findIndex(u => u.email === currentUser.email);
+    
+    if (index !== -1) {
+        allUsers[index][key] = newValue;
+        localStorage.setItem('floraria_users', JSON.stringify(allUsers));
+        
+        currentUser[key] = newValue;
+        localStorage.setItem('floraria_current_user', JSON.stringify(currentUser));
+        
+        toggleAuthInterface();
+    }
+}
+
 toggleAuthInterface();
