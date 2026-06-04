@@ -3,70 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toate Buchetele - D.A.S Lotus</title>
     <link rel="stylesheet" href="style.css">
-    <title>Toate Buchetele - Floraria x</title>
 </head>
 <body>
-    <header class="site-header">
-        <div class="logo">
-            <h1>Floraria x</h1>
-            <p>~ moto pentru florarie ~</p>
-        </div>
 
+    <!-- ANTET (HEADER) REUTILIZABIL ȘI RESPONSIVE -->
+    <header class="site-header">
+        <div class="logo-area">
+            <h1 style="font-family: Georgia, serif; color: #f2dfb6; font-size: 28px; margin: 0;">D.A.S Lotus</h1>
+            <p style="font-size: 12px; color: #f5ebe1; margin: 0; font-style: italic;">~ Locul Unde Frumusetea Prinde Viata ~</p>
+        </div>
         <nav class="main-nav">
             <ul>
                 <li><a href="index.html">Pagina Principala</a></li>
-                <li><a href="buchete.html">Buchete</a></li>
-                <li><a href="index.html">Galerie</a></li>
-                <li><a href="index.html">Despre Noi</a></li>
-                <li><a href="index.html">Contact</a></li>
+                <li><a href="buchete.html" style="color: pink;">Buchete</a></li>
+                <li><a href="index.html#galerie">Galerie</a></li>
+                <li><a href="index.html#despre-noi">Despre Noi</a></li>
+                <li><a href="index.html#contact">Contact</a></li>
             </ul>
         </nav>
-
         <div class="header-icons">
-            <a href="autentificare.html" class="icon-user" style="text-decoration: none;">👤</a>
-            <a href="cos.html" class="cart-icon" style="text-decoration: none; color: inherit;">
-                <span>🛒</span>
+            <a href="autentificare.html" class="icon-user" style="text-decoration: none; color: white;">👤</a>
+            <a href="cos.html" class="cart-icon" style="text-decoration: none; color: white;">
+                🛒
                 <span class="cart-count">0</span>
             </a>
         </div>
     </header>
 
+    <!-- CONȚINUTUL PRINCIPAL AL PAGINII -->
     <main class="site-content">
-        <section class="products-class" style="margin-top: 40px;">
-            <div class="products-class-title">
-                <h2>Toate produsele noastre</h2>
-                <p style="text-align: center; color: #666; margin-top: 5px;">Descoperă întreaga colecție de aranjamente și buchete unice</p>
-            </div>
+        
+        <!-- SECȚIUNE TITLU PAGINĂ -->
+        <section style="padding: 40px 20px 10px 20px; text-align: center;">
+            <h2 class="products-class-title" style="color: #ffffff; margin: 0;">Toate produsele noastre</h2>
+            <p style="color: #4a2e2b; font-size: 18px; margin-top: 10px;">Descoperă întreaga colecție de aranjamente și buchete unice</p>
+            <hr class="divider-line">
+        </section>
+
+        <!-- CONTAINERUL DE PRODUSE: 
+             Folosește id-ul configurat în script și CSS pentru generare dinamică centrată -->
+        <section id="homepage-products-container" class="products-div">
             
-            <div id="all-products-container" class="products-div">
-                <p style="text-align: center; width: 100%; color: #888;">Se încarcă catalogul de flori...</p>
+            <!-- PRODUSE DE REZERVĂ (STATIC) - Vor fi înlocuite automat dacă există produse în Admin -->
+            <div class="product-card">
+                <div class="product-card-img-wrapper">
+                    <img src="Imagini/buchet1.jpg" alt="Buchet 1" onerror="this.src='Imagini/blank_image.jpg'">
+                </div>
+                <div class="product-info">
+                    <h3>Buchet 1</h3>
+                    <div class="price-container">
+                        <span class="price">150 LEI</span>
+                    </div>
+                    <button class="add-to-cart">Adaugă în coș</button>
+                    <button class="view-details" onclick="window.location.href='produs.html?nume=Buchet%201'">Detalii produs</button>
+                </div>
             </div>
+
+            <div class="product-card">
+                <div class="product-card-img-wrapper">
+                    <img src="Imagini/buchet2.jpg" alt="Test 2" onerror="this.src='Imagini/blank_image.jpg'">
+                </div>
+                <div class="product-info">
+                    <h3>Test 2</h3>
+                    <div class="price-container">
+                        <span class="price">3000 LEI</span>
+                    </div>
+                    <button class="add-to-cart">Adaugă în coș</button>
+                    <button class="view-details" onclick="window.location.href='produs.html?nume=Test%202'">Detalii produs</button>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-card-img-wrapper">
+                    <img src="Imagini/buchet3.jpg" alt="Test3" onerror="this.src='Imagini/blank_image.jpg'">
+                </div>
+                <div class="product-info">
+                    <h3>Test3</h3>
+                    <div class="price-container">
+                        <span class="price">123 LEI</span>
+                    </div>
+                    <button class="add-to-cart">Adaugă în coș</button>
+                    <button class="view-details" onclick="window.location.href='produs.html?nume=Test3'">Detalii produs</button>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-card-img-wrapper">
+                    <img src="Imagini/buchet4.jpg" alt="Test 4" onerror="this.src='Imagini/blank_image.jpg'">
+                </div>
+                <div class="product-info">
+                    <h3>Test 4</h3>
+                    <div class="price-container">
+                        <span class="price">12313 LEI</span>
+                    </div>
+                    <button class="add-to-cart">Adaugă în coș</button>
+                    <button class="view-details" onclick="window.location.href='produs.html?nume=Test%204'">Detalii produs</button>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-card-img-wrapper">
+                    <img src="Imagini/blank_image.jpg" alt="Buchet 123" onerror="this.src='Imagini/blank_image.jpg'">
+                </div>
+                <div class="product-info">
+                    <h3>Buchet 123</h3>
+                    <div class="price-container">
+                        <span class="price">123 LEI</span>
+                    </div>
+                    <button class="add-to-cart">Adaugă în coș</button>
+                    <button class="view-details" onclick="window.location.href='produs.html?nume=Buchet%20123'">Detalii produs</button>
+                </div>
+            </div>
+
         </section>
     </main>
 
-    <hr class="divider-line">
-    
+    <!-- SUBSOL (FOOTER) BENEFICII -->
     <footer class="site-footer">
         <div class="benefits-container">
             <div class="benefit-item">
                 <span class="benefit-icon">🚚</span>
-                <h3>Prelucrare rapida</h3>
-                <p>Toate comenzile sunt prelucrate rapid</p>
+                <h3>Livrare Rapidă</h3>
+                <p>În doar 2 ore direct la ușa ta</p>
             </div>
             <div class="benefit-item">
                 <span class="benefit-icon">🌸</span>
-                <h3>Produse de calitate</h3>
-                <p>Doar flori proaspete de cea mai buna calitate</p>
+                <h3>Flori Proaspete</h3>
+                <p>Garanția prospețimii de 7 zile</p>
             </div>
             <div class="benefit-item">
-                <span class="benefit-icon">❤️</span>
-                <h3>Create cu drag</h3>
-                <p>Fiecare buchet este realizat si oferit cu pasiune</p>
+                <span class="benefit-icon">💳</span>
+                <h3>Plată Securizată</h3>
+                <p>Online cu cardul sau la livrare</p>
             </div>
         </div>
     </footer>
 
-    <script src="buchete.js"></script>
+    <!-- LOGICA SCRIPTULUI -->
+    <script src="script.js"></script>
 </body>
 </html>

@@ -97,45 +97,131 @@ body {
     background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.8), transparent);
 }
 
-.products-div {
+/* =======================================================
+   ALINIERE FLEXIBILĂ: AL 5-LEA PRODUS SE CENTREAZĂ AUTOMAT
+   ======================================================= */
+.products-div, 
+#homepage-products-container {
     display: flex;
     flex-direction: row;
-    justify-content: center;
-    align-content: flex-start;
-    gap: 40px;
-    padding: 20px 20px 60px 20px;
     flex-wrap: wrap;
-    max-width: 1300px;
+    justify-content: center; /* Centrează cardurile pe rând, inclusiv pe cele rămase singure */
+    gap: 25px;
+    padding: 20px 20px 60px 20px;
+    max-width: 1200px;
     margin: 0 auto;
     width: 100%;
 }
 
 .product-card {
     background-color: #ffffff;
-    padding: 15px;
-    border-radius: 8px;
-    text-align: center;
+    border: 1px solid #eadecf;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    width: 220px;
-    height: 390px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    position: relative;
+    width: 100%;
+    max-width: 240px; /* Dimensiune fixă și egală pentru toate cardurile */
+    min-height: 440px; /* Înălțime uniformă pentru alinierea butoanelor */
     color: #333333;
+    box-sizing: border-box;
 }
 
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(92, 26, 35, 0.08);
+}
+
+/* Casetă imagine pătrată */
+.product-card-img-wrapper {
+    width: 100%;
+    padding-top: 100%;
+    position: relative;
+    background-color: #fcfcfc;
+    overflow: hidden;
+    border-bottom: 1px solid #f0e6db;
+}
+
+.product-card-img-wrapper img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.5s ease;
+}
+
+.product-card:hover .product-card-img-wrapper img {
+    transform: scale(1.04);
+}
+
+/* Informații text - Centrate complet */
+.product-info {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;    
+    justify-content: space-between; 
+    text-align: center;      
+    flex-grow: 1;
+}
+
+/* Titlu mărit și centrat */
 .product-card h3 {
-    font-size: 16px;
-    margin: 10px 0 5px 0;
+    margin: 0 0 10px 0;
+    font-size: 20px;
+    font-family: Georgia, serif;
+    color: #5c1a23;
+    line-height: 1.3;
+    font-weight: bold;
+    width: 100%;
 }
 
+/* Container prețuri centrat */
+.price-container {
+    margin: 5px 0 15px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+/* Prețuri mari și lizibile */
 .product-card .price {
     font-weight: bold;
     color: #d15b76;
-    margin-bottom: 10px;
+    font-size: 22px;
 }
 
+.old-price {
+    text-decoration: line-through; 
+    color: #a0958d; 
+    font-size: 15px;
+}
+
+/* Badge roșu reducere */
+.discount-tag {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: #dc3545;
+    color: white;
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    z-index: 3;
+    box-shadow: 0 3px 8px rgba(220, 53, 69, 0.3);
+    font-family: Arial, sans-serif;
+}
+
+/* Buton Adaugă în Coș */
 .add-to-cart {
     cursor: pointer;
     padding: 12px 15px;
@@ -143,11 +229,12 @@ body {
     border: 1px solid #c2ae99;
     color: #3d2220;
     font-weight: 900;
-    font-size: 15px;
+    font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 0.8px;
     border-radius: 4px;
     width: 100%;
+    margin-top: auto; 
     transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
@@ -156,6 +243,7 @@ body {
     border-color: #b09982;
 }
 
+/* Buton Detalii */
 .view-details {
     cursor: pointer;
     padding: 12px 15px;
@@ -163,7 +251,7 @@ body {
     border: none;
     color: #ffffff;
     font-weight: bold;
-    font-size: 15px;
+    font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 0.8px;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
@@ -177,14 +265,9 @@ body {
     background-color: #57701d;
 }
 
-.product-card img {
-    width: 100%;
-    max-width: 250px;
-    height: auto;
-    display: block;
-    margin: 0 auto;
-}
-
+/* =======================================================
+   RESTAURARE ȘI STRUCTURĂ METODE RESTUL PAGINII
+   ======================================================= */
 .site-footer {
     width: 100%;
     padding: 40px 0;
@@ -372,7 +455,7 @@ body {
     display: flex;
     flex-direction: column;
     margin-bottom: 15px;
-    position: relative; /* Necesar pentru alinierea absolută a butonului */
+    position: relative;
 }
 
 .input-group label {
@@ -702,6 +785,9 @@ body {
     margin-bottom: 10px;
 }
 
+/* =======================================================
+   MEDIA QUERIES - OPTIMIZAT ȘI PENTRU REZOLUȚII MEDII / PLIABILE
+   ======================================================= */
 @media (max-width: 1024px) {
     .site-header {
         flex-direction: column;
@@ -709,6 +795,7 @@ body {
         padding: 20px;
         text-align: center;
         border-width: 4px;
+        align-items: center;
     }
 
     .main-nav {
@@ -720,12 +807,25 @@ body {
         justify-content: center;
         gap: 15px;
         font-size: 120%;
+        padding: 0;
+    }
+
+    /* PREVINE SUPRAPUNEREA SAU DISPARIȚIA COȘULUI PE TABLETE/PLIABILE */
+    .header-icons {
+        display: flex;
+        flex-direction: row !important;
+        justify-content: center;
+        align-items: center;
+        gap: 25px;
+        width: 100%;
+        margin-top: 10px;
     }
 
     .icon-user, .cart-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
+        width: 55px;
+        height: 55px;
+        font-size: 26px;
+        display: flex !important;
     }
 
     .hero-section {
@@ -758,15 +858,14 @@ body {
         width: 65%;
     }
 
-    .products-div {
+    .products-div,
+    #homepage-products-container {
         gap: 20px;
         padding: 10px;
     }
 
     .product-card {
-        width: 100%;
-        max-width: 280px;
-        height: fit-content;
+        max-width: 220px;
     }
 
     .benefits-container {
@@ -845,20 +944,15 @@ body {
     vertical-align: middle;
 }
 
-/* =======================================================
-   STILIZARE CORECTĂ: TEXTUL "Arată/Ascunde" CENTRAT PERFECT PE VERTICALĂ
-   ======================================================= */
 .toggle-password-eye {
     position: absolute;
     right: 12px;
-    /* Poziționăm elementul la exact 50% din înălțimea părintelui */
     top: 50%; 
-    /* Translatăm înapoi cu jumătate din propria lui înălțime + compensăm fin pentru label */
     transform: translateY(-10%); 
     cursor: pointer;
     font-size: 12px;
     font-weight: 600;
-    color: #769b21; /* Verdele florăriei */
+    color: #769b21;
     user-select: none;
     padding: 2px 6px;
     transition: color 0.2s ease;
@@ -868,10 +962,9 @@ body {
 }
 
 .toggle-password-eye:hover {
-    color: #5c1a23; /* Vișiniu la hover */
+    color: #5c1a23;
 }
 
-/* Textul curat generat prin CSS */
 .toggle-password-eye::before {
     content: "Arată";
     font-family: Arial, sans-serif;
@@ -881,7 +974,6 @@ body {
     content: "Ascunde";
 }
 
-/* Dezactivează pictogramele native din browsere pentru a evita dublarea */
 input[type="password"]::-ms-reveal,
 input[type="password"]::-ms-clear,
 input[type="password"]::-webkit-contacts-auto-fill-button,
@@ -891,43 +983,4 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
 
 ::-webkit-reveal {
     display: none !important;
-}
-
-
-/* Forțează toate cardurile de produs să aibă aceeași structură flexibilă */
-.product-card {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between; /* Împinge butoanele mereu în partea de jos */
-    height: 100%; /* Le face egale ca înălțime dacă sunt pe același rând */
-    box-sizing: border-box;
-}
-
-/* Regula de aur pentru imagini de dimensiuni diferite */
-.product-card img {
-    width: 100%;         /* Ocupă toată lățimea disponibilă a casetei */
-    height: 200px;       /* Forțează o înălțime fixă identică pentru TOATE imaginile */
-    object-fit: cover;   /* Taie inteligent din margini (crop) fără să lungească sau să strivească imaginea */
-    object-position: center; /* Solicită centrarea focalizării pe mijlocul pozei */
-    border-radius: 4px;  /* Păstrează colțurile ușor rotunjite, dacă aveai deja */
-}
-
-/* Forțează titlul să aibă un spațiu fix, aliniind tot ce urmează sub el */
-.product-card h3 {
-    margin: 15px 0 10px 0;
-    font-size: 18px;         /* Ajustează dimensiunea fontului dacă e nevoie */
-    line-height: 1.3;
-    
-    display: flex;
-    align-items: center;     /* Centrează textul pe verticală în spațiul lui */
-    justify-content: center; /* Centrează textul pe orizontală */
-    
-    min-height: 54px;        /* Spațiu garantat pentru aproximativ 2-3 rânduri de text */
-    text-align: center;
-}
-
-/* Opțional: Ne asigurăm că și paragraful de preț are o așezare curată */
-.product-card .price {
-    margin-bottom: 15px;
-    font-weight: bold;
 }

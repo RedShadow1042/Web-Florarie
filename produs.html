@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalii Produs - D.A.S Lotus</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Stiluri specifice interfeței paginii de detalii */
+        .product-details-container {
+            max-width: 1000px;
+            width: 90%;
+            margin: 40px auto;
+            background-color: #ffffff;
+            color: #333333;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: row;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .details-image-wrapper {
+            flex: 1;
+            min-width: 300px;
+            max-width: 450px;
+            border: 1px solid #eadecf;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #fcfcfc;
+            position: relative;
+        }
+
+        .details-image-wrapper img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: cover;
+        }
+
+        .details-info-box {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .details-info-box h2 {
+            font-family: Georgia, serif;
+            color: #5c1a23;
+            font-size: 36px;
+            margin-bottom: 15px;
+            margin-top: 0;
+        }
+
+        .details-price-area {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .details-price-area .price {
+            font-size: 32px;
+            font-weight: bold;
+            color: #d15b76;
+        }
+
+        .details-price-area .old-price {
+            font-size: 22px;
+            text-decoration: line-through;
+            color: #a0958d;
+        }
+
+        .details-discount-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: #dc3545;
+            color: white;
+            padding: 6px 14px;
+            font-weight: bold;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .details-description {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #555555;
+            margin-bottom: 30px;
+            border-top: 1px solid #f5ebe1;
+            padding-top: 20px;
+        }
+
+        .btn-large-cart {
+            cursor: pointer;
+            padding: 15px 30px;
+            background-color: #769b21;
+            border: none;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 6px;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 4px 10px rgba(118, 155, 33, 0.3);
+            text-align: center;
+        }
+
+        .btn-large-cart:hover {
+            background-color: #57701d;
+        }
+        
+        .btn-large-cart:active {
+            transform: scale(0.98);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 10px;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 16px;
+            background-color: rgba(92, 26, 35, 0.6);
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .back-link:hover {
+            background-color: rgba(92, 26, 35, 0.9);
+        }
+
+        @media (max-width: 768px) {
+            .product-details-container {
+                flex-direction: column;
+                padding: 20px;
+            }
+            .details-image-wrapper {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ANTET (HEADER) REUTILIZABIL -->
+    <header class="site-header">
+        <div class="logo-area">
+            <h1 style="font-family: Georgia, serif; color: #f2dfb6; font-size: 28px; margin: 0;">Floraria X</h1>
+            <p style="font-size: 12px; color: #f5ebe1; margin: 0; font-style: italic;">- moto pentru florarie -</p>
+        </div>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="index.html">Pagina Principala</a></li>
+                <li><a href="buchete.html">Buchete</a></li>
+                <li><a href="index.html#galerie">Galerie</a></li>
+                <li><a href="index.html#despre-noi">Despre Noi</a></li>
+                <li><a href="index.html#contact">Contact</a></li>
+            </ul>
+        </nav>
+        <div class="header-icons">
+            <a href="autentificare.html" class="icon-user" style="text-decoration: none; color: white;">👤</a>
+            <a href="cos.html" class="cart-icon" style="text-decoration: none; color: white;">
+                🛒
+                <span class="cart-count">0</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- CONȚINUT PAGINĂ DETALII -->
+    <main class="site-content">
+        <div style="max-width: 1000px; width: 90%; margin: 30px auto 0 auto;">
+            <a href="javascript:history.back()" class="back-link">← Înapoi la produse</a>
+        </div>
+
+        <section class="product-details-container" id="details-content-area">
+            <p style="text-align: center; width: 100%; color: #666;">Se încarcă detaliile produsului...</p>
+        </section>
+    </main>
+
+    <!-- SUBSOL -->
+    <footer class="site-footer">
+        <div class="benefits-container">
+            <div class="benefit-item">
+                <span class="benefit-icon">🚚</span>
+                <h3>Livrare Rapidă</h3>
+                <p>În doar 2 ore direct la ușa ta</p>
+            </div>
+            <div class="benefit-item">
+                <span class="benefit-icon">🌸</span>
+                <h3>Flori Proaspete</h3>
+                <p>Garanția prospețimii de 7 zile</p>
+            </div>
+            <div class="benefit-item">
+                <span class="benefit-icon">💳</span>
+                <h3>Plată Securizată</h3>
+                <p>Online cu cardul sau la livrare</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SCRIPTUL PAGINII -->
+    <script src="script.js"></script>
+    <script>
+        function loadProductDetails() {
+            const container = document.getElementById('details-content-area');
+            if (!container) return;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const productName = urlParams.get('nume');
+
+            if (!productName) {
+                container.innerHTML = `<p style="text-align: center; width: 100%; color: #dc3545; font-weight: bold;">Eroare: Produsul nu a fost specificat!</p>`;
+                return;
+            }
+
+            let catalog = JSON.parse(localStorage.getItem('floraria_bouquets')) || [];
+            let bouquet = catalog.find(b => b.name === productName);
+
+            if (!bouquet) {
+                const fallbackProducts = [
+                    { name: "Buchet 1", price: 150, discount: 20, desc: "Un buchet superb plin de trandafiri roșii proaspeți, perfect aranjați într-un coș tradițional, ideal pentru a transmite dragoste și apreciere.", image: "Imagini/buchet1.jpg" },
+                    { name: "Test 2", price: 3000, discount: 0, desc: "Un aranjament floral spectaculos, de proporții monumentale, realizat din flori mixte de lux. Perfect pentru evenimente corporate sau gesturi de neuitat.", image: "Imagini/buchet2.jpg" },
+                    { name: "Test3", price: 123, discount: 15, desc: "Buchet colorat de primăvară alcătuit din flori de sezon parfumate. Aduce zâmbetul pe buze oricui.", image: "Imagini/buchet3.jpg" },
+                    { name: "Test 4", price: 12313, discount: 0, desc: "Creație florală unică și exclusivistă, destinată colecționarilor și ocaziilor de protocol extrem de importante.", image: "Imagini/buchet4.jpg" },
+                    { name: "Buchet 123", price: 123, discount: 0, desc: "Buchet personalizat simplu și elegant, potrivit pentru cadouri zilnice.", image: "Imagini/blank_image.jpg" }
+                ];
+                bouquet = fallbackProducts.find(b => b.name === productName);
+            }
+
+            if (!bouquet) {
+                container.innerHTML = `<p style="text-align: center; width: 100%; color: #dc3545; font-weight: bold;">Produsul "${productName}" nu a fost găsit în catalog!</p>`;
+                return;
+            }
+
+            const rawPrice = parseInt(bouquet.price) || 0;
+            const discount = parseInt(bouquet.discount) || 0;
+            let finalPrice = rawPrice;
+            let priceHtml = "";
+            let badgeHtml = "";
+
+            if (discount > 0) {
+                finalPrice = Math.round(rawPrice * (1 - discount / 100));
+                priceHtml = `
+                    <span class="old-price">${rawPrice} LEI</span>
+                    <span class="price">${finalPrice} LEI</span>
+                `;
+                badgeHtml = `<div class="details-discount-badge">Reducere -${discount}%</div>`;
+            } else {
+                priceHtml = `<span class="price">${rawPrice} LEI</span>`;
+            }
+
+            container.innerHTML = `
+                <div class="details-image-wrapper">
+                    ${badgeHtml}
+                    <img src="${bouquet.image}" alt="${bouquet.name}" onerror="this.src='Imagini/blank_image.jpg'">
+                </div>
+                <div class="details-info-box">
+                    <h2>${bouquet.name}</h2>
+                    <div class="details-price-area">
+                        ${priceHtml}
+                    </div>
+                    <div class="details-description">
+                        <h3 style="margin-bottom: 10px; color: #5c1a23; font-size: 18px;">Descriere Produs:</h3>
+                        <p>${bouquet.desc || "Acest buchet este realizat cu grijă de floriștii noștri din flori proaspete și atent selecționate, ideal pentru a aduce bucurie celor dragi."}</p>
+                    </div>
+                    <button class="btn-large-cart" id="btn-add-details">Adaugă în coș 🛒</button>
+                </div>
+            `;
+
+            document.getElementById('btn-add-details').addEventListener('click', () => {
+                let cart = JSON.parse(localStorage.getItem('floraria_cart')) || [];
+                cart.push({
+                    name: bouquet.name,
+                    price: finalPrice
+                });
+                localStorage.setItem('floraria_cart', JSON.stringify(cart));
+                
+                if(document.querySelector('.cart-count')) {
+                    document.querySelector('.cart-count').textContent = cart.length;
+                }
+                
+                alert(`"${bouquet.name}" a fost adăugat în coș la prețul de ${finalPrice} LEI!`);
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', loadProductDetails);
+    </script>
+</body>
+</html>
