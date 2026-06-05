@@ -11,6 +11,7 @@ html, body {
 
 body {
     font-family: Arial, sans-serif;
+    font-size: 16px;
     color: #ffffff;
     display: flex;
     flex-direction: column;
@@ -306,6 +307,30 @@ body {
     font-size: 230%;
 }
 
+/* Logo — unificat pentru toate paginile (.logo pe index, .logo-area pe celelalte) */
+.logo,
+.logo-area {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.logo h1,
+.logo-area h1 {
+    font-family: Georgia, serif;
+    color: #f2dfb6;
+    font-size: 28px;
+    margin: 0;
+}
+
+.logo p,
+.logo-area p {
+    font-size: 12px;
+    color: #f5ebe1;
+    margin: 0;
+    font-style: italic;
+}
+
 .main-nav ul {
     display: flex;
     flex-direction: row;
@@ -330,6 +355,11 @@ body {
 .main-nav a:hover {
     color: pink;
     transform: scale(1.1);
+}
+
+/* Pagina curentă activă apare roz */
+.main-nav a.active {
+    color: pink;
 }
 
 .header-icons {

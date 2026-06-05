@@ -11,7 +11,7 @@ function renderCart() {
     cartItemsList.innerHTML = '';
 
     if (cart.length === 0) {
-        cartItemsList.innerHTML = `<div class="empty-cart-message">Coșul tău este gol. Mergi pe pagina principală pentru a adăuga buchete!</div>`;
+        cartItemsList.innerHTML = `<div class="empty-cart-message">Coșul tău este gol. Mergi pe pagina "Buchete" pentru a adăuga in coș!</div>`;
         if (cartSummaryBox) cartSummaryBox.style.display = 'none';
         return;
     }
@@ -73,14 +73,25 @@ if (checkoutBtn) {
             return;
         }
 
+        const calculatedTotal = parseInt(cartTotalPriceElement.textContent) || 0;
+
+        // MAPARE COMPATIBILĂ: Salvăm proprietățile și pentru admin, și pentru istoricul clientului (orders.js)
         const newOrder = {
             id: 'CMD-' + Date.now(),
+            
+            // Chei folosite de orders.js (Istoric Client)
             customerName: currentUser.name,
             customerEmail: currentUser.email,
             products: cart,
-            totalPrice: parseInt(cartTotalPriceElement.textContent),
+            totalPrice: calculatedTotal,
+            
+            // Chei folosite de admin.js (Panou Admin)
+            user: currentUser.name,
+            items: cart,
+            total: calculatedTotal,
+            
             date: new Date().toLocaleDateString('ro-RO') + ' ' + new Date().toLocaleTimeString('ro-RO'),
-            status: 'În așteptare'
+            status: 'active' // Trimisă ca activă direct în panou
         };
 
         let orders = JSON.parse(localStorage.getItem('floraria_orders')) || [];

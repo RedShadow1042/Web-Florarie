@@ -1,25 +1,18 @@
 const myOrdersList = document.getElementById('my-orders-list');
 const ordersTitle = document.getElementById('orders-title');
 
-// Verificăm dacă utilizatorul este logat
 const currentUser = JSON.parse(localStorage.getItem('floraria_current_user'));
 
 if (!currentUser) {
     alert('Trebuie să fii conectat pentru a-ți vedea comenzile!');
     window.location.href = 'autentificare.html';
 } else {
-    // Personalizăm titlul paginii cu numele utilizatorului
     if (ordersTitle) ordersTitle.textContent = `Comenzile lui ${currentUser.name}`;
-    
-    // Afișăm comenzile
     renderMyOrders();
 }
 
 function renderMyOrders() {
-    // Preluăm toate comenzile din sistem
     const allOrders = JSON.parse(localStorage.getItem('floraria_orders')) || [];
-    
-    // Filtrăm pentru a le păstra doar pe cele ale utilizatorului logat curent
     const myOrders = allOrders.filter(order => order.customerEmail === currentUser.email);
 
     myOrdersList.innerHTML = '';
@@ -29,23 +22,36 @@ function renderMyOrders() {
         return;
     }
 
-    // Afișăm comenzile în ordine inversă (cea mai nouă comanda să fie sus)
     myOrders.reverse().forEach(order => {
         const orderCard = document.createElement('div');
         orderCard.className = 'order-card';
 
-        // Generăm lista de produse formatată sub formă de listă HTML
+        // FIX: comanda salvată din cart.js are cheia 'products' dar și 'items' ca alias
+        // Suportăm ambele chei pentru compatibilitate
+        const productsList = order.products || order.items || [];
+
         let productsHTML = '';
-        order.products.forEach(prod => {
+        productsList.forEach(prod => {
             productsHTML += `<li>🌸 ${prod.name} - ${prod.price} LEI</li>`;
         });
 
-        // Mapăm stilurile CSS în funcție de statusul comenzii
+        // FIX: statusul 'active' (trimis de cart.js) nu avea CSS class mapat → apărea fără stil
         let statusClass = 'status-asteptare';
+        let statusLabel = order.status;
+        if (order.status === 'active') {
+            statusClass = 'status-asteptare';
+            statusLabel = 'În procesare';
+        }
+        if (order.status === 'completed') {
+            statusClass = 'status-livrata';
+            statusLabel = 'Finalizată';
+        }
         if (order.status === 'Livrată') statusClass = 'status-livrata';
-        if (order.status === 'Anulată') statusClass = 'status-anulata';
+        if (order.status === 'Anulată') { statusClass = 'status-anulata'; statusLabel = 'Anulată'; }
 
-        // Construim structura vizuală a comenzii
+        // FIX: total poate fi în 'totalPrice' (cart.js) sau 'total' (admin.js)
+        const orderTotal = order.totalPrice !== undefined ? order.totalPrice : (order.total || 0);
+
         orderCard.innerHTML = `
             <div class="order-header">
                 <span class="order-id">${order.id}</span>
@@ -55,8 +61,8 @@ function renderMyOrders() {
                 ${productsHTML}
             </ul>
             <div class="order-footer">
-                <div>Total: <span class="order-total-bold">${order.totalPrice} LEI</span></div>
-                <span class="order-status ${statusClass}">${order.status}</span>
+                <div>Total: <span class="order-total-bold">${orderTotal} LEI</span></div>
+                <span class="order-status ${statusClass}">${statusLabel}</span>
             </div>
         `;
 

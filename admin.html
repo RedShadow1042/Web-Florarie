@@ -3,268 +3,444 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panou Administrare - Floraria X</title>
     <link rel="stylesheet" href="style.css">
-    <title>Panou Administrator - D.A.S Lotus</title>
+    
+    <script>
+        const currentUser = JSON.parse(localStorage.getItem('floraria_current_user'));
+        if (!currentUser || currentUser.role !== 'admin') {
+            alert('Acces refuzat! Această zonă este restricționată administratorilor.');
+            window.location.href = 'index.html';
+        }
+    </script>
+
     <style>
-        /* Stiluri pentru tab-uri */
-        .admin-tabs {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 30px 0;
-        }
-        .tab-btn {
-            padding: 12px 25px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            border: 2px solid #5c1a23;
-            background-color: white;
-            color: #5c1a23;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-        }
-        .tab-btn.active {
-            background-color: #5c1a23;
-            color: white;
-        }
-        .admin-section {
-            display: none; 
-            width: 100%;
-        }
-        .admin-section.active {
-            display: block; 
+        .admin-container {
+            max-width: 1200px;
+            width: 95%;
+            margin: 40px auto;
+            background-color: #ffffff;
+            color: #333333;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
-        /* Stiluri pentru centrare perfectă pe mijloc */
-        .admin-centered-container {
+        .admin-title {
+            color: #5c1a23;
+            font-family: Georgia, serif;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 32px;
+        }
+
+        .admin-sections {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            box-sizing: border-box;
+            flex-direction: row;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
         }
 
         .admin-box {
-            background-color: #fff9f3;
-            border: 1px solid #eadecf;
-            padding: 30px;
+            flex: 1;
+            min-width: 320px;
+            background-color: #fcf9f5;
+            padding: 25px;
             border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            width: 100%;
-            max-width: 600px;
-            margin-bottom: 30px;
-            box-sizing: border-box;
+            border: 1px solid #eadecf;
         }
 
-        .admin-box h2 {
+        .admin-box h3 {
             color: #5c1a23;
-            font-family: Georgia, serif;
-            margin-top: 0;
             margin-bottom: 20px;
-            text-align: center;
             border-bottom: 2px solid #eadecf;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }
 
-        /* Stiluri pentru rândurile din listă */
-        .admin-product-item {
+        .form-group {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: white;
-            padding: 12px;
-            margin-bottom: 10px;
-            border-radius: 6px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-            border: 1px solid #eee;
-            transition: border-left 0.2s ease;
-            box-sizing: border-box;
-        }
-        .admin-product-item img {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 4px;
-            border: 1px solid #ddd;
+            flex-direction: column;
+            margin-bottom: 15px;
         }
 
-        .btn-delete {
+        .form-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #4a2e2b;
+            font-size: 14px;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            padding: 10px;
+            border: 1px solid #c2ae99;
+            border-radius: 4px;
+            font-size: 15px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            border-color: #769b21;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+        }
+
+        .admin-table th, .admin-table td {
+            border: 1px solid #eadecf;
+            padding: 12px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .admin-table th {
+            background-color: #5c1a23;
+            color: white;
+        }
+
+        .btn-admin-submit {
+            background-color: #769b21;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-weight: bold;
+            font-size: 15px;
+            text-transform: uppercase;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        .btn-admin-submit:hover {
+            background-color: #57701d;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #c2ae99;
+            border-radius: 6px;
+            font-size: 16px;
+            outline: none;
+        }
+        
+        .search-input:focus {
+            border-color: #769b21;
+        }
+
+        .btn-status-success {
+            background-color: #769b21;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .btn-status-success:hover { background-color: #57701d; }
+
+        .btn-status-danger {
             background-color: #dc3545;
             color: white;
             border: none;
             padding: 6px 12px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 13px;
             font-weight: bold;
         }
-        .btn-delete:hover {
-            background-color: #bd2130;
-        }
 
-        .admin-search-wrapper {
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto 20px auto;
-            box-sizing: border-box;
-        }
-        .admin-search-input {
-            width: 100%;
-            padding: 12px;
-            font-size: 14px;
-            border: 1px solid #eadecf;
-            border-radius: 6px;
-            box-sizing: border-box;
-            background: #fffbf7;
-        }
-        .admin-search-input:focus {
-            outline: none;
-            border-color: #5c1a23;
+        .btn-status-danger:hover { background-color: #bd2130; }
+
+        /* Hero Section Admin Styles */
+        .hero-admin-card {
             background: white;
-        }
-
-        /* Container Previzualizare Imagine */
-        .image-preview-container {
-            display: none;
-            margin-top: 10px;
-            background: #f0e6db;
-            padding: 10px;
-            border-radius: 6px;
+            border: 1px solid #eadecf;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            display: flex;
             align-items: center;
-            gap: 12px;
-            border: 1px dashed #c4b4a2;
-            box-sizing: border-box;
-        }
-        .image-preview-container img {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 4px;
-            border: 1px solid #fff;
-        }
-        .image-preview-container span {
-            font-size: 12px;
-            color: #5c1a23;
-            font-weight: bold;
+            gap: 16px;
         }
 
-        /* Badge pentru afișare reducere */
-        .discount-badge-admin {
-            background: #dc3545;
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 10px;
+        .hero-admin-card-body {
+            flex: 1;
+        }
+
+        .hero-admin-card-body strong {
+            display: block;
+            color: #5c1a23;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .hero-admin-card-body span {
+            font-size: 13px;
+            color: #777;
+        }
+
+        .hero-badge {
+            font-size: 11px;
             font-weight: bold;
-            margin-left: 5px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+        }
+
+        .hero-badge.activ {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .hero-badge.inactiv {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .hero-admin-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .hero-order-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            margin-right: 4px;
+        }
+
+        .hero-order-btns button {
+            background: #eadecf;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            padding: 2px 5px;
+            line-height: 1;
+            color: #4a2e2b;
+        }
+
+        .hero-order-btns button:hover { background: #c2ae99; }
+
+        .hero-color-preview {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
             display: inline-block;
+            border: 1px solid #ccc;
+            vertical-align: middle;
+            margin-right: 4px;
         }
     </style>
 </head>
 <body>
 
     <header class="site-header">
-        <div class="logo">
-            <h1>D.A.S Lotus</h1>
-            <p>~ Panou de Administrare ~</p>
+        <div class="logo-area">
+            <h1 style="font-family: Georgia, serif; color: #f2dfb6; font-size: 28px; margin: 0;">Floraria X (Admin)</h1>
         </div>
         <nav class="main-nav">
             <ul>
                 <li><a href="index.html">Pagina Principala</a></li>
+                <li><a href="buchete.html">Buchete</a></li>
             </ul>
         </nav>
+        <div class="header-icons">
+            <a href="autentificare.html" class="icon-user" style="text-decoration: none; color: white;">👤</a>
+        </div>
     </header>
 
-    <main class="site-content" id="admin-main-content" style="display: none; padding: 0 20px;">
-        
-        <div class="admin-tabs">
-            <button class="tab-btn active" data-tab="catalog-sec">Gestionare Produse</button>
-            <button class="tab-btn" data-tab="active-orders-sec">Comenzi Active</button>
-            <button class="tab-btn" data-tab="completed-orders-sec">Istoric Comenzi</button>
-        </div>
-
-        <div id="catalog-sec" class="admin-section active">
-            <div class="admin-centered-container">
-                
-                <div class="cart-container admin-box">
-                    <h2 id="form-title">Adaugă un buchet în catalog</h2>
-                    <form id="add-product-form">
-                        <div class="input-group">
-                            <label for="prod-name">Nume Buchet</label>
-                            <input type="text" id="prod-name" required placeholder="Ex: Buchet 19 Trandafiri Roșii">
+    <main class="site-content">
+        <div class="admin-container">
+            <h2 class="admin-title">Panou de Management Florărie</h2>
+            
+            <!-- ═══ SECȚIUNEA 1: CATALOG ═══ -->
+            <div class="admin-sections">
+                <div class="admin-box">
+                    <h3>Adaugă Buchet Nou</h3>
+                    <form id="add-bouquet-form">
+                        <div class="form-group">
+                            <label for="bouquet-name">Nume Buchet:</label>
+                            <input type="text" id="bouquet-name" placeholder="Ex: Buchet Trandafiri Roșii" required>
                         </div>
-                        
-                        <div style="display: flex; gap: 15px; width: 100%;">
-                            <div class="input-group" style="flex: 1;">
-                                <label for="prod-price">Preț Întreg (LEI)</label>
-                                <input type="number" id="prod-price" required placeholder="Ex: 150">
-                            </div>
-                            <div class="input-group" style="flex: 1;">
-                                <label for="prod-discount">Reducere (%) <span style="color:#666; font-weight:normal;">(Opțional)</span></label>
-                                <input type="number" id="prod-discount" min="0" max="99" placeholder="Ex: 20 (pentru 20%)" value="0">
-                            </div>
+                        <div class="form-group">
+                            <label for="bouquet-price">Preț de bază (LEI):</label>
+                            <input type="number" id="bouquet-price" placeholder="Ex: 150" required>
                         </div>
-
-                        <div class="input-group">
-                            <label for="prod-desc">Descriere Buchet</label>
-                            <textarea id="prod-desc" rows="3" placeholder="Ex: Conține trandafiri, verdeață decorativă și ambalaj premium..."></textarea>
+                        <div class="form-group">
+                            <label for="bouquet-discount">Reducere (%):</label>
+                            <input type="number" id="bouquet-discount" placeholder="0 dacă nu are reducere" min="0" max="99">
                         </div>
-                        <div class="input-group">
-                            <label for="prod-image">Imagine Buchet</label>
-                            <input type="file" id="prod-image" accept="image/*" required style="padding: 10px 0;">
-                            
-                            <div id="form-image-preview-box" class="image-preview-container">
-                                <img id="form-preview-img" src="" alt="Preview">
-                                <span id="form-preview-text">Imagine selectată</span>
-                            </div>
-
-                            <button type="button" id="clear-image-btn" style="display: none; background: #dc3545; color: white; border: none; padding: 5px 10px; font-size: 12px; border-radius: 4px; cursor: pointer; margin-top: 8px; width: fit-content;">✕ Șterge imaginea selectată</button>
+                        <div class="form-group">
+                            <label for="bouquet-desc">Descriere Produs:</label>
+                            <textarea id="bouquet-desc" rows="3" placeholder="Detalii despre flori..."></textarea>
                         </div>
-                        
-                        <button type="submit" class="add-to-cart" id="submit-form-btn" style="margin-top: 15px;">Adăugă Buchet nou</button>
-                        <button type="button" id="cancel-edit-btn" style="display: none; background: #666; color: white; border: none; padding: 10px 20px; font-size: 14px; border-radius: 4px; cursor: pointer; margin-top: 10px; width: 100%;">Anulează Editarea</button>
+                        <div class="form-group">
+                            <label for="bouquet-image">Imagine Produs:</label>
+                            <input type="file" id="bouquet-image" accept="image/*">
+                        </div>
+                        <button type="submit" class="btn-admin-submit">Salvează în Catalog</button>
                     </form>
                 </div>
 
-                <div class="cart-container admin-box" style="margin-top: 20px;">
-                    <h2>Produse active în catalog</h2>
-                    <p style="font-size: 13px; color: #666; margin-bottom: 15px; text-align: center;">
-                        Bifează produsele pentru a le trimite pe prima pagină (<span id="homepage-count" style="font-weight:bold; color:#769b21;">0</span>/5 selectate)
-                    </p>
-                    <div id="admin-custom-products-list" style="width: 100%;"></div>
-                </div>
-
-            </div>
-        </div>
-
-        <div id="active-orders-sec" class="admin-section">
-            <div class="admin-centered-container">
-                <div class="admin-search-wrapper">
-                    <input type="text" id="search-active-orders" class="admin-search-input" placeholder="🔍 Caută după ID comandă, nume sau email client...">
-                </div>
-                <div class="cart-container admin-box">
-                    <h2>Comenzi Active (În așteptare)</h2>
-                    <div id="admin-orders-active-list"></div>
+                <div class="admin-box" style="flex: 1.5;">
+                    <h3>Catalog Produse Existente</h3>
+                    <div style="overflow-x: auto; max-height: 440px;">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Foto</th>
+                                    <th>Nume</th>
+                                    <th>Preț Bază</th>
+                                    <th>Reducere</th>
+                                    <th>Activ</th>
+                                    <th>Acțiuni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-bouquets-list"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div id="completed-orders-sec" class="admin-section">
-            <div class="admin-centered-container">
-                <div class="admin-search-wrapper">
-                    <input type="text" id="search-completed-orders" class="admin-search-input" placeholder="🔍 Caută după ID comandă, nume sau email client...">
+            <!-- ═══ SECȚIUNEA 2: COMENZI ═══ -->
+            <div class="admin-box" style="width: 100%; box-sizing: border-box; margin-top: 20px;">
+                <h3>Managementul Comenzilor Clienți</h3>
+                
+                <div class="search-container">
+                    <input type="text" id="order-search-bar" class="search-input" placeholder="Caută comenzi după ID-ul comenzii sau după numele clientului...">
                 </div>
-                <div class="cart-container admin-box">
-                    <h2>Istoric Comenzi Finalizate</h2>
-                    <div id="admin-orders-completed-list"></div>
+
+                <h4 style="color: #4a2e2b; margin: 25px 0 10px 0; font-size: 16px; border-left: 4px solid #dc3545; padding-left: 10px;">🔴 Comenzi Active / În curs de procesare</h4>
+                <div style="overflow-x: auto; margin-bottom: 30px;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID Comandă</th>
+                                <th>Client</th>
+                                <th>Produse Cumpărate</th>
+                                <th>Total Achitat</th>
+                                <th>Dată & Oră</th>
+                                <th>Acțiuni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-active-orders-list"></tbody>
+                    </table>
+                </div>
+
+                <h4 style="color: #4a2e2b; margin: 25px 0 10px 0; font-size: 16px; border-left: 4px solid #769b21; padding-left: 10px;">🟢 Comenzi Finalizate / Arhivate</h4>
+                <div style="overflow-x: auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID Comandă</th>
+                                <th>Client</th>
+                                <th>Produse Cumpărate</th>
+                                <th>Total Achitat</th>
+                                <th>Dată & Oră</th>
+                                <th>Acțiuni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-completed-orders-list"></tbody>
+                    </table>
                 </div>
             </div>
-        </div>
 
+            <!-- ═══ SECȚIUNEA 3: HERO SECTIONS ═══ -->
+            <div class="admin-box" style="width: 100%; box-sizing: border-box; margin-top: 20px;">
+                <h3>🖼️ Managementul Panourilor Publicitare (Hero)</h3>
+                <p style="color:#777; font-size:13px; margin: -10px 0 20px 0;">Panourile sunt afișate pe pagina principală în ordinea de mai jos. Maxim 5 panouri simultan.</p>
+
+                <div class="admin-sections" style="margin-bottom: 20px;">
+                    <!-- Formular adăugare/editare hero -->
+                    <div class="admin-box" style="min-width: 280px; flex: 1;">
+                        <h3 id="hero-form-title" style="font-size:16px;">Adaugă Panou Nou</h3>
+                        <input type="hidden" id="hero-edit-index" value="-1">
+                        <div class="form-group">
+                            <label for="hero-title">Titlu Principal:</label>
+                            <input type="text" id="hero-title" placeholder="Ex: Reducere de 15% la buchete!">
+                        </div>
+                        <div class="form-group">
+                            <label for="hero-subtitle">Text Subtitlu:</label>
+                            <textarea id="hero-subtitle" rows="2" placeholder="Ex: Folosește codul FLORI15 la comandă."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="hero-btn-text">Text Buton:</label>
+                            <input type="text" id="hero-btn-text" placeholder="Ex: Comandă Acum">
+                        </div>
+                        <div class="form-group">
+                            <label for="hero-btn-link">Link Buton (href):</label>
+                            <input type="text" id="hero-btn-link" placeholder="Ex: buchete.html sau #contact">
+                        </div>
+                        <div class="form-group">
+                            <label for="hero-bg-color">Culoare Fundal:</label>
+                            <div style="display:flex; gap:8px; align-items:center;">
+                                <input type="color" id="hero-bg-color" value="#f5ebe1" style="width:50px; height:38px; padding:2px; cursor:pointer;">
+                                <input type="text" id="hero-bg-color-text" placeholder="#f5ebe1 sau gradient" style="flex:1;">
+                            </div>
+                            <small style="color:#999; margin-top:4px;">Poți folosi și un gradient CSS în câmpul text, ex: <em>linear-gradient(135deg, #f5e 0%, #fff 100%)</em></small>
+                        </div>
+                        <div class="form-group">
+                            <label for="hero-text-color">Culoare Text:</label>
+                            <input type="color" id="hero-text-color" value="#5c1a23" style="width:50px; height:38px; padding:2px; cursor:pointer;">
+                        </div>
+                        <div style="display:flex; gap:10px; margin-top: 5px;">
+                            <button onclick="saveHeroSlide()" class="btn-admin-submit" style="flex:1;">Salvează Panoul</button>
+                            <button onclick="cancelHeroEdit()" id="hero-cancel-btn" class="btn-admin-submit" style="flex:0.4; background:#aaa; display:none;">Anulează</button>
+                        </div>
+                    </div>
+
+                    <!-- Preview live -->
+                    <div class="admin-box" style="flex: 1.5; min-width: 280px;">
+                        <h3 style="font-size:16px;">Preview Live</h3>
+                        <div id="hero-preview" style="
+                            background: #f5ebe1;
+                            border-radius: 8px;
+                            padding: 40px 30px;
+                            text-align: center;
+                            min-height: 160px;
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: center;
+                            align-items: center;
+                            gap: 10px;
+                            transition: all 0.3s;
+                        ">
+                            <h2 id="preview-title" style="color:#5c1a23; font-family:Georgia,serif; margin:0; font-size:22px;">Titlul panoului tău</h2>
+                            <p id="preview-subtitle" style="color:#5c1a23; margin:0; font-size:14px;">Subtitlul sau mesajul promoțional</p>
+                            <a id="preview-btn" href="#" style="display:inline-block; background:#769b21; color:white; padding:8px 20px; border-radius:4px; text-decoration:none; font-weight:bold; font-size:13px; margin-top:8px;">Buton</a>
+                        </div>
+                        <p style="color:#999; font-size:12px; margin-top: 10px; text-align:center;">Completează formularul din stânga pentru a vedea preview-ul</p>
+                    </div>
+                </div>
+
+                <!-- Lista panourilor existente -->
+                <h4 style="color: #4a2e2b; margin: 10px 0; font-size: 15px; border-left: 4px solid #5c1a23; padding-left: 10px;">Panouri active pe site</h4>
+                <div id="hero-slides-list">
+                    <p style="color:#777; font-size:13px; padding:10px 0;">Nu există panouri configurate. Adaugă primul panou folosind formularul de mai sus.</p>
+                </div>
+            </div>
+
+        </div>
     </main>
 
+    <script src="script.js"></script>
     <script src="admin.js"></script>
 </body>
 </html>

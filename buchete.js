@@ -1,71 +1,73 @@
 document.addEventListener('DOMContentLoaded', () => {
     let cart = JSON.parse(localStorage.getItem('floraria_cart')) || [];
     
-    // Inițializări elemente
-    const productsContainer = document.getElementById('all-products-container');
+    // FIX: ID corectat — buchete.html folosește 'homepage-products-container', nu 'all-products-container'
+    const productsContainer = document.getElementById('homepage-products-container');
     const cartCountElement = document.querySelector('.cart-count');
 
-    // Sincronizare număr coș
     function updateCartCount() {
         if (cartCountElement) {
             cartCountElement.textContent = cart.length;
         }
     }
 
-    // Funcție de randare a catalogului complet (fără filtru de prima pagină)
     function renderAllProducts() {
         if (!productsContainer) return;
 
         let catalog = JSON.parse(localStorage.getItem('floraria_bouquets')) || [];
 
-        if (catalog.length === 0) {
+        // Filtrăm doar produsele active
+        const activeCatalog = catalog.filter(b => b.active !== false);
+
+        if (activeCatalog.length === 0) {
             productsContainer.innerHTML = '<p style="text-align: center; width: 100%; color: #666; padding: 30px;">Momentan nu există buchete adăugate în magazin.</p>';
             return;
         }
 
-        productsContainer.innerHTML = ''; // Curățăm textul de încărcare
+        productsContainer.innerHTML = '';
 
-        // Generăm dinamic TOATE produsele din baza de date
-        catalog.forEach(bouquet => {
+        activeCatalog.forEach(bouquet => {
+            // FIX: calculăm prețul final cu reducere (înainte afișa prețul brut fără reducere)
+            const rawPrice = parseInt(String(bouquet.price).replace(/\s*lei/gi, '').trim()) || 0;
+            const discount = parseInt(bouquet.discount) || 0;
+            const finalPrice = discount > 0 ? Math.round(rawPrice * (1 - discount / 100)) : rawPrice;
+
+            let priceHtml = '';
+            if (discount > 0) {
+                priceHtml = `
+                    <span class="old-price" style="text-decoration:line-through; color:#a0958d; margin-right:8px; font-size:14px;">${rawPrice} LEI</span>
+                    <span class="price" style="color:#dc3545;">${finalPrice} LEI</span>
+                `;
+            } else {
+                priceHtml = `<span class="price">${finalPrice} LEI</span>`;
+            }
+
             const productCard = document.createElement('div');
             productCard.className = 'product-card';
-
             productCard.innerHTML = `
-                <img src="${bouquet.image}" alt="${bouquet.name}" onerror="this.src='Imagini/blank_image.jpg'">
-                <h3>${bouquet.name}</h3>
-                <p class="price">${bouquet.price}</p>
-                <button class="add-to-cart">Adauga in cos</button>
-                <button class="view-details" onclick="alert('Descriere produs:\n\n${bouquet.desc || bouquet.name}')">Detalii produs</button>
+                <div class="product-card-img-wrapper" style="position:relative;">
+                    ${discount > 0 ? `<div style="position:absolute;top:8px;left:8px;background:#dc3545;color:white;font-size:11px;font-weight:bold;padding:3px 6px;border-radius:4px;z-index:5;">-${discount}%</div>` : ''}
+                    <img src="${bouquet.image}" alt="${bouquet.name}" onerror="this.src='Imagini/blank_image.jpg'">
+                </div>
+                <div class="product-info">
+                    <h3>${bouquet.name}</h3>
+                    <div class="price-container">${priceHtml}</div>
+                    <button class="add-to-cart">Adaugă în coș</button>
+                    <button class="view-details" onclick="window.location.href='produs.html?nume=${encodeURIComponent(bouquet.name)}'">Detalii produs</button>
+                </div>
             `;
-            productsContainer.appendChild(productCard);
-        });
 
-        // Atașăm evenimentele de click pentru coș
-        const addToCartButtons = productsContainer.querySelectorAll('.add-to-cart');
-        addToCartButtons.forEach((button) => {
-            button.addEventListener('click', (event) => {
-                const productCard = event.target.closest('.product-card');
-                
-                const productName = productCard.querySelector('h3').textContent;
-                const productPriceText = productCard.querySelector('.price').textContent;
-                
-                const cleanPrice = productPriceText.replace(' LEI', '').replace(' RON', '').trim();
-                const productPrice = parseInt(cleanPrice) || 0;
-
-                const product = {
-                    name: productName,
-                    price: productPrice
-                };
-
-                cart.push(product);
+            productCard.querySelector('.add-to-cart').addEventListener('click', () => {
+                cart.push({ name: bouquet.name, price: finalPrice });
                 localStorage.setItem('floraria_cart', JSON.stringify(cart));
                 updateCartCount();
-                alert(`"${productName}" a fost adăugat în coș!`);
+                alert(`"${bouquet.name}" a fost adăugat în coș!`);
             });
+
+            productsContainer.appendChild(productCard);
         });
     }
 
-    // Verificarea utilizatorului autentificat (afișare nume și link admin)
     function checkLoggedInUser() {
         const currentUser = JSON.parse(localStorage.getItem('floraria_current_user'));
         const navMenuList = document.querySelector('.main-nav ul');
@@ -77,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 userIconLink.style.width = 'auto';
                 userIconLink.style.padding = '0 15px';
                 userIconLink.style.borderRadius = '30px';
-                userIconLink.href = 'autentificare.html'; 
+                userIconLink.href = 'autentificare.html';
             }
 
             if (currentUser.role === 'admin' && navMenuList) {
@@ -91,7 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Executare funcții la deschiderea paginii
     renderAllProducts();
     updateCartCount();
     checkLoggedInUser();
