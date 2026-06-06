@@ -179,54 +179,174 @@ function setupAdminPanelLogic() {
     renderAdminOrders();
 }
 
+// ═══════════════════════════════════════════════════════════
+// RICH TEXT EDITOR — implementare custom, fara execCommand
+// ═══════════════════════════════════════════════════════════
+
+let _savedRange = null;
+
+function saveSelection(editorId) {
+    const editor = document.getElementById('hero-' + editorId);
+    if (!editor) return;
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        if (editor.contains(range.commonAncestorContainer)) {
+            _savedRange = range.cloneRange();
+        }
+    }
+}
+
+function restoreSelection() {
+    if (!_savedRange) return false;
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(_savedRange);
+    return true;
+}
+
+// Functia centrala: aplica un stil CSS pe selectia curenta.
+// Parcurge recursiv nodurile din fragment si suprascrie stilul pe fiecare span
+// sau creeaza unul nou in jurul nodurilor text.
+function applyStyleToSelection(styleProp, styleValue) {
+    if (!restoreSelection()) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+
+    const range = sel.getRangeAt(0);
+    const fragment = range.extractContents();
+
+    function wrapNode(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            if (node.textContent === '') return node.cloneNode();
+            const span = document.createElement('span');
+            span.style[styleProp] = styleValue;
+            span.appendChild(node.cloneNode());
+            return span;
+        }
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            const clone = node.cloneNode(false);
+            // Daca e span, suprascriem stilul direct pe el
+            if (node.tagName === 'SPAN') {
+                clone.style[styleProp] = styleValue;
+            }
+            node.childNodes.forEach(child => clone.appendChild(wrapNode(child)));
+            return clone;
+        }
+        return node.cloneNode(true);
+    }
+
+    const newFrag = document.createDocumentFragment();
+    fragment.childNodes.forEach(child => newFrag.appendChild(wrapNode(child)));
+    range.insertNode(newFrag);
+    syncHeroPreview();
+}
+
+window.rteCmd = (editorId, command) => {
+    if (!restoreSelection()) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    if (command === 'bold') {
+        const isBold = document.queryCommandState('bold');
+        applyStyleToSelection('fontWeight', isBold ? 'normal' : 'bold');
+    } else if (command === 'italic') {
+        const isItalic = document.queryCommandState('italic');
+        applyStyleToSelection('fontStyle', isItalic ? 'normal' : 'italic');
+    } else if (command === 'underline') {
+        const isUnderline = document.queryCommandState('underline');
+        applyStyleToSelection('textDecoration', isUnderline ? 'none' : 'underline');
+    } else if (command === 'strikeThrough') {
+        applyStyleToSelection('textDecoration', 'line-through');
+    }
+    syncHeroPreview();
+};
+
+window.rteFont = (editorId, fontFamily) => {
+    applyStyleToSelection('fontFamily', fontFamily === 'inherit' ? '' : fontFamily);
+};
+
+window.rteFontSize = (editorId, size) => {
+    if (!size) return;
+    applyStyleToSelection('fontSize', size);
+};
+
+window.rteForeColor = (editorId, color) => {
+    applyStyleToSelection('color', color);
+};
+
+// Elimina toata formatarea — inlocuieste selectia cu text simplu
+window.rteClear = (editorId) => {
+    if (!restoreSelection()) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    const fragment = range.extractContents();
+    const plainText = document.createTextNode(fragment.textContent);
+    range.insertNode(plainText);
+    syncHeroPreview();
+};
+
+// Sincronizare preview live
+window.syncHeroPreview = () => {
+    const titleEl    = document.getElementById('hero-title');
+    const subtitleEl = document.getElementById('hero-subtitle');
+    const btnTextEl  = document.getElementById('hero-btn-text');
+    const btnLinkEl  = document.getElementById('hero-btn-link');
+    const bgTextEl   = document.getElementById('hero-bg-color-text');
+    const bgColorEl  = document.getElementById('hero-bg-color');
+    const previewBox = document.getElementById('hero-preview');
+
+    if (titleEl)    document.getElementById('preview-title').innerHTML    = titleEl.innerHTML || '<span style="color:#aaa">Titlul panoului tău</span>';
+    if (subtitleEl) document.getElementById('preview-subtitle').innerHTML = subtitleEl.innerHTML || '<span style="color:#aaa">Subtitlul mesajului</span>';
+    if (btnTextEl)  {
+        const btn = document.getElementById('preview-btn');
+        btn.textContent = btnTextEl.value || 'Buton';
+        btn.style.display = btnTextEl.value ? 'inline-block' : 'none';
+    }
+    if (btnLinkEl)  document.getElementById('preview-btn').href = btnLinkEl.value || '#';
+    if (previewBox) {
+        const bg = (bgTextEl && bgTextEl.value.trim()) || (bgColorEl && bgColorEl.value) || '#f5ebe1';
+        previewBox.style.background = bg;
+    }
+};
+
 // ══════════════════════════════════════════
 // SECȚIUNEA 3: HERO SECTIONS ADMIN
 // ══════════════════════════════════════════
 function setupHeroAdmin() {
     const STORAGE_KEY = 'floraria_hero_slides';
 
-    // Sincronizare preview live în timp real
-    const fieldsToSync = [
-        { id: 'hero-title',    previewId: 'preview-title',    prop: 'textContent' },
-        { id: 'hero-subtitle', previewId: 'preview-subtitle', prop: 'textContent' },
-        { id: 'hero-btn-text', previewId: 'preview-btn',      prop: 'textContent' },
-        { id: 'hero-btn-link', previewId: 'preview-btn',      prop: 'href' },
-    ];
-
-    fieldsToSync.forEach(({ id, previewId, prop }) => {
-        const input = document.getElementById(id);
-        const preview = document.getElementById(previewId);
-        if (!input || !preview) return;
-        input.addEventListener('input', () => {
-            preview[prop] = input.value || (prop === 'textContent' ? '...' : '#');
-        });
+    // Salvăm selecția când editorul pierde focus-ul (click pe toolbar)
+    ['hero-title', 'hero-subtitle'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const editorId = id.replace('hero-', '');
+        el.addEventListener('mouseup',  () => saveSelection(editorId));
+        el.addEventListener('keyup',    () => saveSelection(editorId));
+        el.addEventListener('blur',     () => saveSelection(editorId));
     });
 
     // Culoare fundal — color picker sincronizat cu câmpul text
     const bgColorPicker = document.getElementById('hero-bg-color');
     const bgColorText   = document.getElementById('hero-bg-color-text');
     const heroPreview   = document.getElementById('hero-preview');
-    const previewTitle  = document.getElementById('preview-title');
-    const previewSub    = document.getElementById('preview-subtitle');
 
-    bgColorPicker.addEventListener('input', () => {
-        bgColorText.value = bgColorPicker.value;
-        heroPreview.style.background = bgColorPicker.value;
-    });
+    if (bgColorPicker) {
+        bgColorPicker.addEventListener('input', () => {
+            if (bgColorText) bgColorText.value = bgColorPicker.value;
+            heroPreview.style.background = bgColorPicker.value;
+        });
+    }
 
-    bgColorText.addEventListener('input', () => {
-        heroPreview.style.background = bgColorText.value;
-        // Actualizăm color picker-ul doar dacă e hex valid
-        if (/^#[0-9a-f]{6}$/i.test(bgColorText.value.trim())) {
-            bgColorPicker.value = bgColorText.value.trim();
-        }
-    });
-
-    const textColorPicker = document.getElementById('hero-text-color');
-    textColorPicker.addEventListener('input', () => {
-        previewTitle.style.color = textColorPicker.value;
-        previewSub.style.color   = textColorPicker.value;
-    });
+    if (bgColorText) {
+        bgColorText.addEventListener('input', () => {
+            heroPreview.style.background = bgColorText.value;
+            if (/^#[0-9a-f]{6}$/i.test(bgColorText.value.trim()) && bgColorPicker) {
+                bgColorPicker.value = bgColorText.value.trim();
+            }
+            syncHeroPreview();
+        });
+    }
 
     // Randare listă panouri
     function renderHeroList() {
@@ -245,15 +365,20 @@ function setupHeroAdmin() {
             card.className = 'hero-admin-card';
 
             const bgIsGradient = slide.bg && slide.bg.includes('gradient');
-            const bgPreviewStyle = bgIsGradient
-                ? `background:${slide.bg}; width:40px; height:40px; border-radius:6px; border:1px solid #ccc; flex-shrink:0;`
-                : `background:${slide.bg || '#f5ebe1'}; width:40px; height:40px; border-radius:6px; border:1px solid #ccc; flex-shrink:0;`;
+            const bgPreviewStyle = `background:${slide.bg || '#f5ebe1'}; width:40px; height:40px; border-radius:6px; border:1px solid #ccc; flex-shrink:0;`;
+
+            // Afișăm text simplu (fără html) în preview card
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = slide.title || '';
+            const plainTitle = tempDiv.textContent || '(fără titlu)';
+            tempDiv.innerHTML = slide.subtitle || '';
+            const plainSub = tempDiv.textContent || '(fără subtitlu)';
 
             card.innerHTML = `
                 <div style="${bgPreviewStyle}"></div>
                 <div class="hero-admin-card-body">
-                    <strong>${slide.title || '(fără titlu)'}</strong>
-                    <span>${slide.subtitle || '(fără subtitlu)'}</span>
+                    <strong>${plainTitle}</strong>
+                    <span>${plainSub}</span>
                     ${slide.btnText ? `<span style="display:block; margin-top:3px; font-size:12px;">🔗 ${slide.btnText} → ${slide.btnLink || '#'}</span>` : ''}
                 </div>
                 <div class="hero-admin-actions">
@@ -275,18 +400,21 @@ function setupHeroAdmin() {
         });
     }
 
-    // Salvare panou (adăugare sau editare)
+    // Salvare panou
     window.saveHeroSlide = () => {
-        const title    = document.getElementById('hero-title').value.trim();
-        const subtitle = document.getElementById('hero-subtitle').value.trim();
+        const titleEl    = document.getElementById('hero-title');
+        const subtitleEl = document.getElementById('hero-subtitle');
+        const title    = titleEl ? titleEl.innerHTML.trim() : '';
+        const subtitle = subtitleEl ? subtitleEl.innerHTML.trim() : '';
         const btnText  = document.getElementById('hero-btn-text').value.trim();
         const btnLink  = document.getElementById('hero-btn-link').value.trim();
         const bgText   = document.getElementById('hero-bg-color-text').value.trim();
         const bgColor  = bgText || document.getElementById('hero-bg-color').value;
-        const txtColor = document.getElementById('hero-text-color').value;
         const editIdx  = parseInt(document.getElementById('hero-edit-index').value);
 
-        if (!title && !subtitle) {
+        // Considerăm gol dacă conține doar placeholder sau e cu adevărat gol
+        const isEmpty = (html) => !html || html === '' || html === '<br>';
+        if (isEmpty(title) && isEmpty(subtitle)) {
             alert('Adaugă cel puțin un titlu sau un subtitlu pentru panou.');
             return;
         }
@@ -298,10 +426,10 @@ function setupHeroAdmin() {
             return;
         }
 
-        const newSlide = { title, subtitle, btnText, btnLink, bg: bgColor, textColor: txtColor, active: true };
+        // Salvăm HTML-ul (cu formatare inline) direct
+        const newSlide = { title, subtitle, btnText, btnLink, bg: bgColor, active: true };
 
         if (editIdx >= 0) {
-            // Păstrăm statusul activ/inactiv la editare
             newSlide.active = slides[editIdx].active;
             slides[editIdx] = newSlide;
         } else {
@@ -314,68 +442,70 @@ function setupHeroAdmin() {
         alert(editIdx >= 0 ? 'Panoul a fost actualizat!' : 'Panoul a fost adăugat cu succes!');
     };
 
-    // Editare panou — populează formularul
+    // Editare panou — populează editorii rich text
     window.editHeroSlide = (index) => {
         const slides = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
         const s = slides[index];
 
-        document.getElementById('hero-title').value    = s.title || '';
-        document.getElementById('hero-subtitle').value = s.subtitle || '';
-        document.getElementById('hero-btn-text').value = s.btnText || '';
-        document.getElementById('hero-btn-link').value = s.btnLink || '';
-        document.getElementById('hero-bg-color-text').value = s.bg || '#f5ebe1';
-        document.getElementById('hero-text-color').value    = s.textColor || '#5c1a23';
-        document.getElementById('hero-edit-index').value    = index;
+        const titleEl    = document.getElementById('hero-title');
+        const subtitleEl = document.getElementById('hero-subtitle');
 
-        // Actualizăm preview
-        document.getElementById('preview-title').textContent    = s.title || '';
-        document.getElementById('preview-subtitle').textContent = s.subtitle || '';
-        document.getElementById('preview-btn').textContent      = s.btnText || 'Buton';
-        document.getElementById('preview-btn').href             = s.btnLink || '#';
+        if (titleEl)    titleEl.innerHTML    = s.title || '';
+        if (subtitleEl) subtitleEl.innerHTML = s.subtitle || '';
+
+        document.getElementById('hero-btn-text').value          = s.btnText || '';
+        document.getElementById('hero-btn-link').value          = s.btnLink || '';
+        document.getElementById('hero-bg-color-text').value     = s.bg || '#f5ebe1';
+        document.getElementById('hero-bg-color').value          = /^#[0-9a-f]{6}$/i.test(s.bg) ? s.bg : '#f5ebe1';
+        document.getElementById('hero-edit-index').value        = index;
+
+        // Preview
+        document.getElementById('preview-title').innerHTML    = s.title || '';
+        document.getElementById('preview-subtitle').innerHTML = s.subtitle || '';
+        document.getElementById('preview-btn').textContent    = s.btnText || 'Buton';
+        document.getElementById('preview-btn').href           = s.btnLink || '#';
         document.getElementById('hero-preview').style.background = s.bg || '#f5ebe1';
-        document.getElementById('preview-title').style.color    = s.textColor || '#5c1a23';
-        document.getElementById('preview-subtitle').style.color = s.textColor || '#5c1a23';
 
         document.getElementById('hero-form-title').textContent = 'Editează Panoul';
         document.getElementById('hero-cancel-btn').style.display = 'inline-block';
 
-        // Scroll la formular
         document.getElementById('hero-title').scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
 
-    // Anulare editare
     window.cancelHeroEdit = () => resetHeroForm();
 
     function resetHeroForm() {
-        document.getElementById('hero-title').value    = '';
-        document.getElementById('hero-subtitle').value = '';
-        document.getElementById('hero-btn-text').value = '';
-        document.getElementById('hero-btn-link').value = '';
-        document.getElementById('hero-bg-color-text').value = '';
-        document.getElementById('hero-bg-color').value      = '#f5ebe1';
-        document.getElementById('hero-text-color').value    = '#5c1a23';
-        document.getElementById('hero-edit-index').value    = '-1';
-        document.getElementById('hero-form-title').textContent = 'Adaugă Panou Nou';
+        const titleEl    = document.getElementById('hero-title');
+        const subtitleEl = document.getElementById('hero-subtitle');
+        if (titleEl)    titleEl.innerHTML    = '';
+        if (subtitleEl) subtitleEl.innerHTML = '';
+
+        document.getElementById('hero-btn-text').value          = '';
+        document.getElementById('hero-btn-link').value          = '';
+        document.getElementById('hero-bg-color-text').value     = '';
+        document.getElementById('hero-bg-color').value          = '#f5ebe1';
+        document.getElementById('hero-edit-index').value        = '-1';
+        document.getElementById('hero-form-title').textContent  = 'Adaugă Panou Nou';
         document.getElementById('hero-cancel-btn').style.display = 'none';
-        document.getElementById('preview-title').textContent    = 'Titlul panoului tău';
-        document.getElementById('preview-subtitle').textContent = 'Subtitlul sau mesajul promoțional';
-        document.getElementById('preview-btn').textContent      = 'Buton';
+
+        document.getElementById('preview-title').innerHTML    = '<span style="color:#aaa">Titlul panoului tău</span>';
+        document.getElementById('preview-subtitle').innerHTML = '<span style="color:#aaa">Subtitlul sau mesajul promoțional</span>';
+        document.getElementById('preview-btn').textContent    = 'Buton';
+        document.getElementById('preview-btn').href           = '#';
         document.getElementById('hero-preview').style.background = '#f5ebe1';
-        document.getElementById('preview-title').style.color    = '#5c1a23';
-        document.getElementById('preview-subtitle').style.color = '#5c1a23';
     }
 
-    // Ștergere panou
     window.deleteHeroSlide = (index) => {
         const slides = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-        if (confirm(`Sigur vrei să ștergi panoul "${slides[index].title || 'fără titlu'}"?`)) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = slides[index].title || 'fără titlu';
+        if (confirm(`Sigur vrei să ștergi panoul "${tempDiv.textContent}"?`)) {
             slides.splice(index, 1);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(slides));
             renderHeroList();
         }
     };
 
-    // Toggle activ/inactiv
     window.toggleHeroActive = (index) => {
         let slides = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
         slides[index].active = slides[index].active === false ? true : false;
@@ -383,7 +513,6 @@ function setupHeroAdmin() {
         renderHeroList();
     };
 
-    // Reordonare panouri (sus/jos)
     window.moveHeroSlide = (index, direction) => {
         let slides = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
         const newIndex = index + direction;
@@ -394,4 +523,5 @@ function setupHeroAdmin() {
     };
 
     renderHeroList();
+    syncHeroPreview();
 }

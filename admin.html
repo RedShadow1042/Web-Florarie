@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panou Administrare - Floraria X</title>
+    <title>Panou Administrare - D.A.S Lotus</title>
     <link rel="stylesheet" href="style.css">
     
     <script>
@@ -253,12 +253,11 @@
 
     <header class="site-header">
         <div class="logo-area">
-            <h1 style="font-family: Georgia, serif; color: #f2dfb6; font-size: 28px; margin: 0;">Floraria X (Admin)</h1>
+            <h1 style="font-family: Georgia, serif; color: #f2dfb6; font-size: 28px; margin: 0;">D.A.S Lotus (Admin)</h1>
         </div>
         <nav class="main-nav">
             <ul>
                 <li><a href="index.html">Pagina Principala</a></li>
-                <li><a href="buchete.html">Buchete</a></li>
             </ul>
         </nav>
         <div class="header-icons">
@@ -367,40 +366,192 @@
                 <h3>🖼️ Managementul Panourilor Publicitare (Hero)</h3>
                 <p style="color:#777; font-size:13px; margin: -10px 0 20px 0;">Panourile sunt afișate pe pagina principală în ordinea de mai jos. Maxim 5 panouri simultan.</p>
 
+                <!-- Rich Text Editor Styles -->
+                <style>
+                    .rte-wrapper { margin-bottom: 15px; }
+                    .rte-label { font-weight: bold; margin-bottom: 6px; color: #4a2e2b; font-size: 14px; display: block; }
+                    .rte-toolbar {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 4px;
+                        padding: 6px 8px;
+                        background: #f0ebe3;
+                        border: 1px solid #c2ae99;
+                        border-bottom: none;
+                        border-radius: 4px 4px 0 0;
+                        align-items: center;
+                    }
+                    .rte-toolbar button {
+                        background: white;
+                        border: 1px solid #c2ae99;
+                        border-radius: 3px;
+                        padding: 3px 7px;
+                        cursor: pointer;
+                        font-size: 13px;
+                        line-height: 1.4;
+                        color: #333;
+                        transition: background 0.15s;
+                        min-width: 28px;
+                    }
+                    .rte-toolbar button:hover { background: #e8e0d5; }
+                    .rte-toolbar button.active { background: #769b21; color: white; border-color: #57701d; }
+                    .rte-toolbar select {
+                        border: 1px solid #c2ae99;
+                        border-radius: 3px;
+                        padding: 3px 5px;
+                        font-size: 12px;
+                        background: white;
+                        cursor: pointer;
+                        color: #333;
+                        height: 26px;
+                    }
+                    .rte-toolbar input[type="color"] {
+                        width: 26px;
+                        height: 26px;
+                        padding: 1px;
+                        border: 1px solid #c2ae99;
+                        border-radius: 3px;
+                        cursor: pointer;
+                        background: white;
+                    }
+                    .rte-toolbar .rte-sep {
+                        width: 1px;
+                        height: 22px;
+                        background: #c2ae99;
+                        margin: 0 2px;
+                    }
+                    .rte-toolbar label {
+                        font-size: 11px;
+                        color: #666;
+                        margin-right: 2px;
+                    }
+                    .rte-editor {
+                        border: 1px solid #c2ae99;
+                        border-radius: 0 0 4px 4px;
+                        padding: 10px 12px;
+                        min-height: 50px;
+                        background: white;
+                        font-size: 15px;
+                        outline: none;
+                        line-height: 1.5;
+                        color: #333;
+                    }
+                    .rte-editor:focus { border-color: #769b21; }
+                    .rte-editor[data-placeholder]:empty:before {
+                        content: attr(data-placeholder);
+                        color: #aaa;
+                        pointer-events: none;
+                        display: block;
+                    }
+                    .rte-hint { font-size: 11px; color: #999; margin-top: 3px; }
+                </style>
+
                 <div class="admin-sections" style="margin-bottom: 20px;">
                     <!-- Formular adăugare/editare hero -->
-                    <div class="admin-box" style="min-width: 280px; flex: 1;">
+                    <div class="admin-box" style="min-width: 300px; flex: 1;">
                         <h3 id="hero-form-title" style="font-size:16px;">Adaugă Panou Nou</h3>
                         <input type="hidden" id="hero-edit-index" value="-1">
-                        <div class="form-group">
-                            <label for="hero-title">Titlu Principal:</label>
-                            <input type="text" id="hero-title" placeholder="Ex: Reducere de 15% la buchete!">
+
+                        <!-- TITLU RICH TEXT -->
+                        <div class="rte-wrapper">
+                            <span class="rte-label">Titlu Principal:</span>
+                            <div class="rte-toolbar" id="rte-toolbar-title">
+                                <button onclick="rteCmd('title','bold')" title="Bold" id="btn-title-bold"><b>B</b></button>
+                                <button onclick="rteCmd('title','italic')" title="Italic" id="btn-title-italic"><i>I</i></button>
+                                <button onclick="rteCmd('title','underline')" title="Subliniat" id="btn-title-underline"><u>U</u></button>
+                                <button onclick="rteCmd('title','strikeThrough')" title="Tăiat">S̶</button>
+                                <div class="rte-sep"></div>
+                                <label>Font:</label>
+                                <select onchange="rteFont('title', this.value)" id="sel-title-font">
+                                    <option value="inherit">Implicit</option>
+                                    <option value="Georgia, serif">Georgia</option>
+                                    <option value="'Playfair Display', serif">Playfair</option>
+                                    <option value="Arial, sans-serif">Arial</option>
+                                    <option value="'Trebuchet MS', sans-serif">Trebuchet</option>
+                                    <option value="'Courier New', monospace">Courier</option>
+                                    <option value="'Dancing Script', cursive">Script</option>
+                                </select>
+                                <div class="rte-sep"></div>
+                                <label>Mărime:</label>
+                                <select onchange="rteFontSize('title', this.value)" id="sel-title-size">
+                                    <option value="">—</option>
+                                    <option value="14px">14</option>
+                                    <option value="18px">18</option>
+                                    <option value="22px">22</option>
+                                    <option value="28px">28</option>
+                                    <option value="36px">36</option>
+                                    <option value="48px">48</option>
+                                </select>
+                                <div class="rte-sep"></div>
+                                <label>Culoare:</label>
+                                <input type="color" value="#5c1a23" oninput="rteForeColor('title', this.value)" title="Culoare text selecție">
+                                <div class="rte-sep"></div>
+                                <button onclick="rteClear('title')" title="Elimină formatare selecție" style="font-size:11px;">✕ fmt</button>
+                            </div>
+                            <div class="rte-editor" id="hero-title" contenteditable="true"
+                                 data-placeholder="Ex: Reducere de 15% la buchete!"
+                                 oninput="syncHeroPreview()"></div>
                         </div>
-                        <div class="form-group">
-                            <label for="hero-subtitle">Text Subtitlu:</label>
-                            <textarea id="hero-subtitle" rows="2" placeholder="Ex: Folosește codul FLORI15 la comandă."></textarea>
+
+                        <!-- SUBTITLU RICH TEXT -->
+                        <div class="rte-wrapper">
+                            <span class="rte-label">Text Subtitlu:</span>
+                            <div class="rte-toolbar" id="rte-toolbar-subtitle">
+                                <button onclick="rteCmd('subtitle','bold')" title="Bold"><b>B</b></button>
+                                <button onclick="rteCmd('subtitle','italic')" title="Italic"><i>I</i></button>
+                                <button onclick="rteCmd('subtitle','underline')" title="Subliniat"><u>U</u></button>
+                                <button onclick="rteCmd('subtitle','strikeThrough')" title="Tăiat">S̶</button>
+                                <div class="rte-sep"></div>
+                                <label>Font:</label>
+                                <select onchange="rteFont('subtitle', this.value)">
+                                    <option value="inherit">Implicit</option>
+                                    <option value="Georgia, serif">Georgia</option>
+                                    <option value="'Playfair Display', serif">Playfair</option>
+                                    <option value="Arial, sans-serif">Arial</option>
+                                    <option value="'Trebuchet MS', sans-serif">Trebuchet</option>
+                                    <option value="'Courier New', monospace">Courier</option>
+                                    <option value="'Dancing Script', cursive">Script</option>
+                                </select>
+                                <div class="rte-sep"></div>
+                                <label>Mărime:</label>
+                                <select onchange="rteFontSize('subtitle', this.value)">
+                                    <option value="">—</option>
+                                    <option value="12px">12</option>
+                                    <option value="14px">14</option>
+                                    <option value="16px">16</option>
+                                    <option value="18px">18</option>
+                                    <option value="22px">22</option>
+                                    <option value="28px">28</option>
+                                </select>
+                                <div class="rte-sep"></div>
+                                <label>Culoare:</label>
+                                <input type="color" value="#5c1a23" oninput="rteForeColor('subtitle', this.value)" title="Culoare text selecție">
+                                <div class="rte-sep"></div>
+                                <button onclick="rteClear('subtitle')" title="Elimină formatare" style="font-size:11px;">✕ fmt</button>
+                            </div>
+                            <div class="rte-editor" id="hero-subtitle" contenteditable="true"
+                                 data-placeholder="Ex: Folosește codul FLORI15 la comandă."
+                                 oninput="syncHeroPreview()"></div>
+                            <p class="rte-hint">💡 Selectează o parte din text pentru a-i schimba culoarea, fontul sau stilul individual.</p>
                         </div>
+
                         <div class="form-group">
                             <label for="hero-btn-text">Text Buton:</label>
-                            <input type="text" id="hero-btn-text" placeholder="Ex: Comandă Acum">
+                            <input type="text" id="hero-btn-text" placeholder="Ex: Comandă Acum" oninput="syncHeroPreview()">
                         </div>
                         <div class="form-group">
                             <label for="hero-btn-link">Link Buton (href):</label>
-                            <input type="text" id="hero-btn-link" placeholder="Ex: buchete.html sau #contact">
+                            <input type="text" id="hero-btn-link" placeholder="Ex: buchete.html sau #contact" oninput="syncHeroPreview()">
                         </div>
                         <div class="form-group">
-                            <label for="hero-bg-color">Culoare Fundal:</label>
+                            <label>Culoare Fundal:</label>
                             <div style="display:flex; gap:8px; align-items:center;">
                                 <input type="color" id="hero-bg-color" value="#f5ebe1" style="width:50px; height:38px; padding:2px; cursor:pointer;">
-                                <input type="text" id="hero-bg-color-text" placeholder="#f5ebe1 sau gradient" style="flex:1;">
+                                <input type="text" id="hero-bg-color-text" placeholder="#f5ebe1 sau gradient CSS" style="flex:1;">
                             </div>
-                            <small style="color:#999; margin-top:4px;">Poți folosi și un gradient CSS în câmpul text, ex: <em>linear-gradient(135deg, #f5e 0%, #fff 100%)</em></small>
+                            <small style="color:#999; margin-top:4px;">Poți folosi gradient CSS, ex: <em>linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%)</em></small>
                         </div>
-                        <div class="form-group">
-                            <label for="hero-text-color">Culoare Text:</label>
-                            <input type="color" id="hero-text-color" value="#5c1a23" style="width:50px; height:38px; padding:2px; cursor:pointer;">
-                        </div>
-                        <div style="display:flex; gap:10px; margin-top: 5px;">
+                        <div style="display:flex; gap:10px; margin-top: 10px;">
                             <button onclick="saveHeroSlide()" class="btn-admin-submit" style="flex:1;">Salvează Panoul</button>
                             <button onclick="cancelHeroEdit()" id="hero-cancel-btn" class="btn-admin-submit" style="flex:0.4; background:#aaa; display:none;">Anulează</button>
                         </div>
@@ -414,19 +565,19 @@
                             border-radius: 8px;
                             padding: 40px 30px;
                             text-align: center;
-                            min-height: 160px;
+                            min-height: 180px;
                             display: flex;
                             flex-direction: column;
                             justify-content: center;
                             align-items: center;
                             gap: 10px;
-                            transition: all 0.3s;
+                            transition: background 0.3s;
                         ">
-                            <h2 id="preview-title" style="color:#5c1a23; font-family:Georgia,serif; margin:0; font-size:22px;">Titlul panoului tău</h2>
-                            <p id="preview-subtitle" style="color:#5c1a23; margin:0; font-size:14px;">Subtitlul sau mesajul promoțional</p>
+                            <div id="preview-title" style="font-family:Georgia,serif; margin:0; font-size:22px; font-weight:bold;"></div>
+                            <div id="preview-subtitle" style="margin:0; font-size:14px;"></div>
                             <a id="preview-btn" href="#" style="display:inline-block; background:#769b21; color:white; padding:8px 20px; border-radius:4px; text-decoration:none; font-weight:bold; font-size:13px; margin-top:8px;">Buton</a>
                         </div>
-                        <p style="color:#999; font-size:12px; margin-top: 10px; text-align:center;">Completează formularul din stânga pentru a vedea preview-ul</p>
+                        <p style="color:#999; font-size:12px; margin-top: 10px; text-align:center;">Preview-ul reflectă în timp real tot ce scrii și formatezi</p>
                     </div>
                 </div>
 

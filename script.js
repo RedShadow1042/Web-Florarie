@@ -42,13 +42,13 @@ function renderHeroSlides() {
         const bgStyle = slide.bg
             ? (slide.bg.includes('gradient') ? `background: ${slide.bg};` : `background-color: ${slide.bg};`)
             : '';
-        const textStyle = slide.textColor ? `color: ${slide.textColor};` : '';
 
+        // title/subtitle sunt acum HTML (rich text) — le inserăm direct
         slidesHTML += `
             <div class="hero-slide ${i === 0 ? 'active' : ''}" style="${bgStyle}">
                 <div class="hero-content">
-                    <h2 style="${textStyle}">${slide.title || ''}</h2>
-                    <p style="${textStyle}">${slide.subtitle || ''}</p>
+                    <h2>${slide.title || ''}</h2>
+                    <p>${slide.subtitle || ''}</p>
                     ${slide.btnText
                         ? `<a href="${slide.btnLink || '#'}" class="hero-btn">${slide.btnText}</a>`
                         : ''}
