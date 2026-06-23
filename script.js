@@ -1,201 +1,179 @@
-// Inițializare catalog implicit dacă e gol
-(function initializeCatalogIfEmpty() {
-    let catalog = JSON.parse(localStorage.getItem('floraria_bouquets')) || [];
-    if (catalog.length === 0) {
-        const defaultBouquets = [
-            { name: "Buchet 1", price: 150, discount: 20, desc: "Un buchet superb plin de trandafiri roșii proaspeți, perfect aranjați într-un coș tradițional.", image: "Imagini/buchet1.jpg", active: true },
-            { name: "Test 2", price: 3000, discount: 0, desc: "Un aranjament floral spectaculos de proporții monumentale.", image: "Imagini/buchet2.jpg", active: true },
-            { name: "Test3", price: 123, discount: 15, desc: "Buchet colorat de primăvară alcătuit din flori parfumate.", image: "Imagini/buchet3.jpg", active: true },
-            { name: "Test 4", price: 12313, discount: 0, desc: "Creație florală unică destinată ocaziilor de protocol.", image: "Imagini/buchet4.jpg", active: true },
-            { name: "Buchet 123", price: 123, discount: 0, desc: "Buchet personalizat simplu și elegant.", image: "Imagini/blank_image.jpg", active: true }
-        ];
-        localStorage.setItem('floraria_bouquets', JSON.stringify(defaultBouquets));
-    }
-})();
+// =============================================
+// script.js — Homepage: produse + hero + cos
+// =============================================
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
     updateCartCount();
-    renderHomepageProducts();
-    setupCarousel();       // va fi suprascris de renderHeroSlides dacă există panouri custom
-    renderHeroSlides();    // panouri din admin — dacă există, înlocuiesc cele statice
     checkLoggedInUser();
+    await renderHomepageProducts();
+    await renderHeroSlides();
 });
 
-// ══════════════════════════════════════════
-// HERO SLIDES DINAMICE (din Admin)
-// ══════════════════════════════════════════
-function renderHeroSlides() {
+// ── Produse homepage ──────────────────────────
+async function renderHomepageProducts() {
+    const container = document.getElementById('homepage-products-container');
+    if (!container) return;
+    container.innerHTML = '<p style="text-align:center;color:#aaa;padding:30px;">Se incarca produsele...</p>';
+    try {
+        const res = await fetch('api/products.php?action=active');
+        const catalog = await res.json();
+        if (!Array.isArray(catalog) || catalog.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:#666;padding:30px;">Momentan nu exista produse disponibile.</p>';
+            return;
+        }
+        container.innerHTML = '';
+        catalog.forEach(bouquet => {
+            const rawPrice   = parseInt(bouquet.price)    || 0;
+            const discount   = parseInt(bouquet.discount) || 0;
+            const finalPrice = discount > 0 ? Math.round(rawPrice * (1 - discount / 100)) : rawPrice;
+            const priceHtml  = discount > 0
+                ? `<span class="old-price">${rawPrice} LEI</span><span class="price" style="color:#dc3545;">${finalPrice} LEI</span>`
+                : `<span class="price">${rawPrice} LEI</span>`;
+
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.innerHTML = `
+                <div class="product-card-img-wrapper">
+                    ${discount > 0 ? `<div class="discount-tag">-${discount}%</div>` : ''}
+                    <img src="${bouquet.image}" alt="${bouquet.name}" onerror="this.src='Imagini/blank_image.jpg'">
+                </div>
+                <div class="product-info">
+                    <h3>${bouquet.name}</h3>
+                    <div class="price-container">${priceHtml}</div>
+                    <button class="add-to-cart">Adauga in cos</button>
+                    <button class="view-details" onclick="window.location.href='produs.html?id=${bouquet.id}'">Detalii produs</button>
+                </div>`;
+            card.querySelector('.add-to-cart').addEventListener('click', () => {
+                addToCart({ id: bouquet.id, name: bouquet.name, price: finalPrice });
+            });
+            container.appendChild(card);
+        });
+    } catch (e) {
+        container.innerHTML = '<p style="text-align:center;color:#dc3545;">Eroare la incarcarea produselor.</p>';
+    }
+}
+
+// ── Hero carousel dinamic ─────────────────────
+async function renderHeroSlides() {
     const heroSection = document.querySelector('.hero-section');
     if (!heroSection) return;
+    try {
+        const res    = await fetch('api/hero.php?action=active');
+        const slides = await res.json();
+        if (!Array.isArray(slides) || slides.length === 0) {
+            setupCarousel();
+            return;
+        }
 
-    const STORAGE_KEY = 'floraria_hero_slides';
-    const slides = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    // Filtrăm doar panourile active
-    const activeSlides = slides.filter(s => s.active !== false);
+        let html = '';
+        slides.forEach((s, i) => {
+            // Fundal
+            let bgStyle = '';
+            if (s.bg_image) {
+                bgStyle = `background-image:url('${s.bg_image}');background-size:cover;background-position:center;`;
+            } else if (s.bg) {
+                bgStyle = s.bg.includes('gradient') ? `background:${s.bg};` : `background-color:${s.bg};`;
+            }
 
-    // Dacă nu există panouri configurate în admin, lăsăm cele statice din HTML
-    if (activeSlides.length === 0) return;
+            // Overlay gradient (doar pentru slide-uri cu imagine)
+            let overlayHtml = '';
+            if (s.bg_image) {
+                const gradDir = s.grad_dir || 'to right';
+                const alpha   = ((parseInt(s.grad_str) || 55) / 100).toFixed(2);
+                overlayHtml = `<div class="hero-overlay" style="background:linear-gradient(${gradDir},rgba(0,0,0,${alpha}) 0%,rgba(0,0,0,0) 70%);"></div>`;
+            }
 
-    // Construim HTML-ul dinamic
-    let slidesHTML = '';
-    activeSlides.forEach((slide, i) => {
-        const bgStyle = slide.bg
-            ? (slide.bg.includes('gradient') ? `background: ${slide.bg};` : `background-color: ${slide.bg};`)
-            : '';
+            // Pozitie text (clamped sigur; CSS reseteaza pe mobile <600px)
+            const posX    = Math.min(Math.max(parseInt(s.pos_x) || 50, 12), 88);
+            const posY    = Math.min(Math.max(parseInt(s.pos_y) || 50, 12), 78);
+            const posStyle = `position:absolute;left:${posX}%;top:${posY}%;transform:translate(-50%,-50%);z-index:2;`;
 
-        // title/subtitle sunt acum HTML (rich text) — le inserăm direct
-        slidesHTML += `
-            <div class="hero-slide ${i === 0 ? 'active' : ''}" style="${bgStyle}">
-                <div class="hero-content">
-                    <h2>${slide.title || ''}</h2>
-                    <p>${slide.subtitle || ''}</p>
-                    ${slide.btnText
-                        ? `<a href="${slide.btnLink || '#'}" class="hero-btn">${slide.btnText}</a>`
-                        : ''}
+            html += `
+            <div class="hero-slide has-dynamic-content ${i === 0 ? 'active' : ''}" style="${bgStyle}">
+                ${overlayHtml}
+                <div class="hero-content" style="${posStyle}">
+                    ${s.title    ? `<h2>${s.title}</h2>`    : ''}
+                    ${s.subtitle ? `<p>${s.subtitle}</p>`   : ''}
+                    ${s.btn_text ? `<a href="${s.btn_link || '#'}" class="hero-btn">${s.btn_text}</a>` : ''}
                 </div>
-            </div>
-        `;
-    });
+            </div>`;
+        });
 
-    // Dots
-    let dotsHTML = '<div class="hero-dots">';
-    activeSlides.forEach((_, i) => {
-        dotsHTML += `<span class="dot ${i === 0 ? 'active' : ''}"></span>`;
-    });
-    dotsHTML += '</div>';
+        // Dots
+        const dotsHtml = '<div class="hero-dots">'
+            + slides.map((_, i) => `<span class="dot ${i === 0 ? 'active' : ''}"></span>`).join('')
+            + '</div>';
 
-    heroSection.innerHTML = slidesHTML + dotsHTML;
-
-    // Re-inițializăm carousel-ul cu noile elemente
+        heroSection.innerHTML = html + dotsHtml;
+    } catch (e) {
+        /* API indisponibil — lasam slide-urile statice din HTML */
+    }
     setupCarousel();
 }
 
-// ══════════════════════════════════════════
-// CAROUSEL LOGIC
-// ══════════════════════════════════════════
+// ── Carousel logic ────────────────────────────
 function setupCarousel() {
     const slides = document.querySelectorAll('.hero-slide');
-    const dots = document.querySelectorAll('.dot');
-    if (!slides.length || !dots.length) return;
+    const dots   = document.querySelectorAll('.dot');
+    if (!slides.length) return;
 
-    // Curățăm intervalul anterior dacă există (pentru re-inițializare)
     if (window._carouselInterval) clearInterval(window._carouselInterval);
+    let current = 0;
 
-    let currentSlide = 0;
-
-    function showSlide(index) {
-        slides.forEach(slide => slide.classList.remove('active'));
-        dots.forEach(dot => dot.classList.remove('active'));
-        slides[index].classList.add('active');
-        dots[index].classList.add('active');
+    function showSlide(idx) {
+        slides.forEach(s => s.classList.remove('active'));
+        dots.forEach(d   => d.classList.remove('active'));
+        if (slides[idx]) slides[idx].classList.add('active');
+        if (dots[idx])   dots[idx].classList.add('active');
+        current = idx;
     }
 
     function nextSlide() {
-        currentSlide = (currentSlide + 1) % slides.length;
-        showSlide(currentSlide);
+        showSlide((current + 1) % slides.length);
     }
 
     window._carouselInterval = setInterval(nextSlide, 5000);
 
-    dots.forEach((dot, index) => {
-        dot.addEventListener('click', () => {
-            currentSlide = index;
-            showSlide(currentSlide);
-            clearInterval(window._carouselInterval);
-            window._carouselInterval = setInterval(nextSlide, 5000);
-        });
-    });
+    dots.forEach((dot, i) => dot.addEventListener('click', () => {
+        showSlide(i);
+        clearInterval(window._carouselInterval);
+        window._carouselInterval = setInterval(nextSlide, 5000);
+    }));
 }
 
-// ══════════════════════════════════════════
-// COȘ — NUMĂR PRODUSE
-// ══════════════════════════════════════════
+// ── Cos ───────────────────────────────────────
+function addToCart(item) {
+    const cart = JSON.parse(localStorage.getItem('floraria_cart')) || [];
+    cart.push(item);
+    localStorage.setItem('floraria_cart', JSON.stringify(cart));
+    updateCartCount();
+    alert(`"${item.name}" a fost adaugat in cos!`);
+}
+
 function updateCartCount() {
-    const cartCountElement = document.querySelector('.cart-count');
-    if (cartCountElement) {
-        let cart = JSON.parse(localStorage.getItem('floraria_cart')) || [];
-        cartCountElement.textContent = cart.length;
-    }
+    const el = document.querySelector('.cart-count');
+    if (el) el.textContent = (JSON.parse(localStorage.getItem('floraria_cart')) || []).length;
 }
 
-// ══════════════════════════════════════════
-// PRODUSE HOMEPAGE
-// ══════════════════════════════════════════
-function renderHomepageProducts() {
-    const container = document.getElementById('homepage-products-container');
-    if (!container) return;
-
-    let catalog = JSON.parse(localStorage.getItem('floraria_bouquets')) || [];
-    container.innerHTML = '';
-
-    const activeCatalog = catalog.filter(bouquet => bouquet.active !== false);
-
-    activeCatalog.forEach(bouquet => {
-        const rawPrice = parseInt(String(bouquet.price).replace(/\s*lei/gi, '').trim()) || 0;
-        const discount = parseInt(bouquet.discount) || 0;
-        let finalPrice = discount > 0 ? Math.round(rawPrice * (1 - discount / 100)) : rawPrice;
-        let priceHtml = '';
-
-        if (discount > 0) {
-            priceHtml = `
-                <span class="old-price" style="text-decoration: line-through; color: #a0958d; margin-right: 8px; font-size: 14px;">${rawPrice} LEI</span>
-                <span class="price" style="color: #dc3545;">${finalPrice} LEI</span>
-            `;
-        } else {
-            priceHtml = `<span class="price">${rawPrice} LEI</span>`;
-        }
-
-        const card = document.createElement('div');
-        card.className = 'product-card';
-        card.innerHTML = `
-            <div class="product-card-img-wrapper" style="position:relative;">
-                ${discount > 0 ? `<div class="discount-tag" style="position:absolute; top:8px; left:8px; background:#dc3545; color:white; font-size:11px; font-weight:bold; padding:3px 6px; border-radius:4px; z-index:5;">-${discount}%</div>` : ''}
-                <img src="${bouquet.image}" alt="${bouquet.name}" onerror="this.src='Imagini/blank_image.jpg'">
-            </div>
-            <div class="product-info">
-                <h3>${bouquet.name}</h3>
-                <div class="price-container">${priceHtml}</div>
-                <button class="add-to-cart">Adăugă în coș</button>
-                <button class="view-details" onclick="window.location.href='produs.html?nume=${encodeURIComponent(bouquet.name)}'">Detalii produs</button>
-            </div>
-        `;
-
-        card.querySelector('.add-to-cart').addEventListener('click', () => {
-            let cart = JSON.parse(localStorage.getItem('floraria_cart')) || [];
-            cart.push({ name: bouquet.name, price: finalPrice });
-            localStorage.setItem('floraria_cart', JSON.stringify(cart));
-            updateCartCount();
-            alert(`"${bouquet.name}" a fost adăugat în coș!`);
-        });
-
-        container.appendChild(card);
-    });
-}
-
-// ══════════════════════════════════════════
-// UTILIZATOR LOGAT
-// ══════════════════════════════════════════
+// ── Utilizator logat ──────────────────────────
 function checkLoggedInUser() {
-    const currentUser = JSON.parse(localStorage.getItem('floraria_current_user'));
-    const navMenuList = document.querySelector('.main-nav ul');
-    
-    if (currentUser) {
-        const userIconLink = document.querySelector('.icon-user');
-        if (userIconLink) {
-            userIconLink.innerHTML = `👤 <span style="font-size:14px; margin-left:5px; font-family:Arial,sans-serif;">${currentUser.name}</span>`;
-            userIconLink.style.width = 'auto';
-            userIconLink.style.padding = '0 15px';
-            userIconLink.style.borderRadius = '30px';
-            userIconLink.href = 'autentificare.html';
-        }
+    const u = JSON.parse(localStorage.getItem('floraria_current_user'));
+    if (!u) return;
 
-        if (currentUser.role === 'admin' && navMenuList) {
-            if (!document.getElementById('admin-nav-link')) {
-                const adminLi = document.createElement('li');
-                adminLi.id = 'admin-nav-link';
-                adminLi.innerHTML = `<a href="admin.html" style="color: #ffcccc;">Panou Admin</a>`;
-                navMenuList.appendChild(adminLi);
-            }
+    const icon = document.querySelector('.icon-user');
+    if (icon) {
+        icon.innerHTML = `<span style="font-size:20px;">👤</span><span style="font-size:13px;margin-left:6px;white-space:nowrap;">${u.name}</span>`;
+        icon.style.cssText = 'display:flex;align-items:center;width:auto;height:44px;padding:0 14px;border-radius:22px;background:rgba(255,255,255,0.15);color:white;text-decoration:none;cursor:pointer;transition:background .2s;';
+        icon.href = 'autentificare.html';
+    }
+
+    if (u.role === 'admin') {
+        const nav = document.querySelector('.main-nav ul');
+        if (nav && !document.getElementById('admin-nav-link')) {
+            const li = document.createElement('li');
+            li.id = 'admin-nav-link';
+            li.innerHTML = `<a href="admin.html" style="color:#ffcccc;">Panou Admin</a>`;
+            nav.appendChild(li);
         }
     }
 }

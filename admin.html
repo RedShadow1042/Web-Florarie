@@ -174,7 +174,8 @@
             margin-bottom: 12px;
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .hero-admin-card-body {
@@ -216,6 +217,13 @@
             gap: 6px;
             align-items: center;
             flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 500px) {
+            .hero-admin-card { padding: 12px; gap: 8px; }
+            .hero-admin-card-body strong { font-size: 13px; }
+            .hero-admin-actions { width: 100%; justify-content: flex-end; }
         }
 
         .hero-order-btns {
@@ -444,6 +452,39 @@
                         display: block;
                     }
                     .rte-hint { font-size: 11px; color: #999; margin-top: 3px; }
+
+                    .admin-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 15px;
+                        background: white;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                    }
+
+                    .admin-table th, .admin-table td {
+                        padding: 12px;
+                        text-align: left;
+                        border-bottom: 1px solid #eee;
+                    }
+
+                    .admin-table th {
+                        background-color: #f8f5f4;
+                        color: #5c1a23;
+                        font-weight: bold;
+                    }
+
+                    .btn-delete {
+                        background-color: #d9534f;
+                        color: white;
+                        border: none;
+                        padding: 6px 12px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                    }
+
+                    .btn-delete:hover { background-color: #c9302c; }
                 </style>
 
                 <div class="admin-sections" style="margin-bottom: 20px;">
@@ -475,12 +516,17 @@
                                 <label>Mărime:</label>
                                 <select onchange="rteFontSize('title', this.value)" id="sel-title-size">
                                     <option value="">—</option>
-                                    <option value="14px">14</option>
-                                    <option value="18px">18</option>
-                                    <option value="22px">22</option>
+                                    <option value="16px">16</option>
+                                    <option value="20px">20</option>
+                                    <option value="24px">24</option>
                                     <option value="28px">28</option>
                                     <option value="36px">36</option>
-                                    <option value="48px">48</option>
+                                    <option value="42px">42 (default)</option>
+                                    <option value="52px">52</option>
+                                    <option value="64px">64</option>
+                                    <option value="80px">80</option>
+                                    <option value="96px">96</option>
+                                    <option value="120px">120</option>
                                 </select>
                                 <div class="rte-sep"></div>
                                 <label>Culoare:</label>
@@ -519,9 +565,12 @@
                                     <option value="12px">12</option>
                                     <option value="14px">14</option>
                                     <option value="16px">16</option>
-                                    <option value="18px">18</option>
-                                    <option value="22px">22</option>
+                                    <option value="20px">20 (default)</option>
+                                    <option value="24px">24</option>
                                     <option value="28px">28</option>
+                                    <option value="36px">36</option>
+                                    <option value="48px">48</option>
+                                    <option value="64px">64</option>
                                 </select>
                                 <div class="rte-sep"></div>
                                 <label>Culoare:</label>
@@ -544,47 +593,193 @@
                             <input type="text" id="hero-btn-link" placeholder="Ex: buchete.html sau #contact" oninput="syncHeroPreview()">
                         </div>
                         <div class="form-group">
-                            <label>Culoare Fundal:</label>
-                            <div style="display:flex; gap:8px; align-items:center;">
-                                <input type="color" id="hero-bg-color" value="#f5ebe1" style="width:50px; height:38px; padding:2px; cursor:pointer;">
+                            <label>🖼️ Imagine Fundal:</label>
+                            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                <label style="flex:1;padding:9px 14px;background:#f0ebe3;border:2px dashed #c2ae99;border-radius:6px;cursor:pointer;text-align:center;font-size:13px;color:#7a5c4a;transition:background .2s;" id="img-upload-label">
+                                    <span>📁 Click pentru a alege imaginea</span>
+                                    <input type="file" id="hero-bg-image-file" accept="image/*" style="display:none;" onchange="handleHeroBgImage(this)">
+                                </label>
+                                <button onclick="clearHeroBgImage()" style="padding:9px 12px;background:#fff;border:1px solid #c2ae99;border-radius:6px;cursor:pointer;font-size:12px;color:#888;" title="Elimină imaginea">✕ Elimină</button>
+                            </div>
+                            <div id="img-upload-preview" style="display:none;margin-top:8px;position:relative;">
+                                <img id="img-upload-thumb" src="" style="width:100%;max-height:100px;object-fit:cover;border-radius:6px;border:1px solid #c2ae99;">
+                                <span style="position:absolute;bottom:4px;right:6px;background:rgba(0,0,0,.5);color:white;font-size:10px;padding:2px 6px;border-radius:4px;">Previzualizare</span>
+                            </div>
+                            <input type="hidden" id="hero-bg-image-data">
+                            <p style="color:#999;font-size:11px;margin-top:4px;">Sau specifică o culoare/gradient dacă nu folosești imagine:</p>
+                            <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+                                <input type="color" id="hero-bg-color" value="#f5ebe1" style="width:40px;height:34px;padding:2px;cursor:pointer;">
                                 <input type="text" id="hero-bg-color-text" placeholder="#f5ebe1 sau gradient CSS" style="flex:1;">
                             </div>
-                            <small style="color:#999; margin-top:4px;">Poți folosi gradient CSS, ex: <em>linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%)</em></small>
                         </div>
-                        <div style="display:flex; gap:10px; margin-top: 10px;">
-                            <button onclick="saveHeroSlide()" class="btn-admin-submit" style="flex:1;">Salvează Panoul</button>
-                            <button onclick="cancelHeroEdit()" id="hero-cancel-btn" class="btn-admin-submit" style="flex:0.4; background:#aaa; display:none;">Anulează</button>
+
+                        <div class="form-group">
+                            <label>📍 Poziție Bloc Text:</label>
+                            <p style="font-size:12px;color:#999;margin-bottom:8px;">Trage blocul direct pe preview sau editează manual. Titlul, subtitlul și butonul se mișcă împreună.</p>
+                            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                                <div style="display:flex;gap:6px;align-items:center;">
+                                    <label style="font-size:12px;font-weight:600;color:#7a5c4a;">X:</label>
+                                    <input type="number" id="hero-pos-x" min="0" max="100" value="50" style="width:60px;padding:5px;border:1px solid #c2ae99;border-radius:4px;font-size:13px;" oninput="updatePosFromInputs()">
+                                    <span style="font-size:12px;color:#999;">%</span>
+                                </div>
+                                <div style="display:flex;gap:6px;align-items:center;">
+                                    <label style="font-size:12px;font-weight:600;color:#7a5c4a;">Y:</label>
+                                    <input type="number" id="hero-pos-y" min="0" max="100" value="50" style="width:60px;padding:5px;border:1px solid #c2ae99;border-radius:4px;font-size:13px;" oninput="updatePosFromInputs()">
+                                    <span style="font-size:12px;color:#999;">%</span>
+                                </div>
+                                <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                                    <button onclick="setPresetPos(50,20)" type="button" style="padding:4px 8px;font-size:11px;border:1px solid #c2ae99;border-radius:4px;background:#fff;cursor:pointer;">↑ Sus</button>
+                                    <button onclick="setPresetPos(50,50)" type="button" style="padding:4px 8px;font-size:11px;border:1px solid #c2ae99;border-radius:4px;background:#fff;cursor:pointer;">⊙ Centru</button>
+                                    <button onclick="setPresetPos(50,78)" type="button" style="padding:4px 8px;font-size:11px;border:1px solid #c2ae99;border-radius:4px;background:#fff;cursor:pointer;">↓ Jos</button>
+                                    <button onclick="setPresetPos(15,50)" type="button" style="padding:4px 8px;font-size:11px;border:1px solid #c2ae99;border-radius:4px;background:#fff;cursor:pointer;">← Stânga</button>
+                                    <button onclick="setPresetPos(85,50)" type="button" style="padding:4px 8px;font-size:11px;border:1px solid #c2ae99;border-radius:4px;background:#fff;cursor:pointer;">→ Dreapta</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Campuri ascunse gradient -->
+                        <input type="hidden" id="hero-gradient-dir" value="to right">
+                        <input type="hidden" id="hero-gradient-strength" value="55">
+                        <span id="grad-str-val" style="display:none;">55%</span>
+
+                        <!-- Buton salvare -->
+                        <div style="display:flex;gap:10px;margin-top:20px;">
+                            <button onclick="saveHeroSlide()" style="background:#769b21;color:white;border:none;padding:10px 24px;border-radius:6px;font-weight:bold;font-size:14px;cursor:pointer;">
+                                💾 Salvează Panoul
+                            </button>
+                            <button onclick="cancelHeroEdit()" id="hero-cancel-btn" style="background:#aaa;color:white;border:none;padding:10px 18px;border-radius:6px;font-weight:bold;font-size:14px;cursor:pointer;display:none;">
+                                Anulează
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Preview live -->
-                    <div class="admin-box" style="flex: 1.5; min-width: 280px;">
-                        <h3 style="font-size:16px;">Preview Live</h3>
-                        <div id="hero-preview" style="
-                            background: #f5ebe1;
-                            border-radius: 8px;
-                            padding: 40px 30px;
-                            text-align: center;
-                            min-height: 180px;
-                            display: flex;
-                            flex-direction: column;
-                            justify-content: center;
-                            align-items: center;
-                            gap: 10px;
-                            transition: background 0.3s;
-                        ">
-                            <div id="preview-title" style="font-family:Georgia,serif; margin:0; font-size:22px; font-weight:bold;"></div>
-                            <div id="preview-subtitle" style="margin:0; font-size:14px;"></div>
-                            <a id="preview-btn" href="#" style="display:inline-block; background:#769b21; color:white; padding:8px 20px; border-radius:4px; text-decoration:none; font-weight:bold; font-size:13px; margin-top:8px;">Buton</a>
-                        </div>
-                        <p style="color:#999; font-size:12px; margin-top: 10px; text-align:center;">Preview-ul reflectă în timp real tot ce scrii și formatezi</p>
-                    </div>
                 </div>
 
                 <!-- Lista panourilor existente -->
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- PREVIEW HERO INLINE — full-width, aceeasi inaltime    -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div id="hero-preview-section" style="margin:0 0 30px 0; width:100%;">
+        <!-- Bara info + coordonate -->
+        <div style="
+            background:#2c1a1a; color:white;
+            display:flex; align-items:center; justify-content:space-between;
+            padding:10px 20px; font-size:13px;
+            border-radius:6px 6px 0 0;
+        ">
+            <span>👁 <strong>Preview Live</strong> — Trage fiecare element separat direct pe preview</span>
+            <span style="font-size:12px;color:#ccc;font-family:monospace;">X: <span id="preview-pos-x">50</span>% &nbsp;|&nbsp; Y: <span id="preview-pos-y">50</span>%</span>
+            </span>
+        </div>
+        <!-- Hero preview — full-width, 450px height, identic cu site-ul -->
+        <div id="hero-preview" style="
+            position:relative;
+            overflow:hidden;
+            width:100%;
+            height:450px;
+            background:#f5ebe1;
+            border:4px solid #d3875b;
+            border-top:none;
+            border-radius:0 0 6px 6px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.15);
+        ">
+            <!-- Imaginea fundal -->
+            <img id="preview-bg-img" src="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+
+            <!-- Overlay gradient -->
+            <div id="preview-overlay" style="position:absolute;inset:0;pointer-events:none;z-index:2;"></div>
+
+            <!-- Overlay gradient -->
+            <div id="preview-overlay" style="position:absolute;inset:0;pointer-events:none;z-index:2;"></div>
+            <!-- Bloc text unic draggable -->
+            <div id="preview-content" style="
+                position:absolute; left:50%; top:50%;
+                transform:translate(-50%,-50%);
+                z-index:4; cursor:grab;
+                padding:8px 16px;
+                border:2px dashed transparent; border-radius:6px;
+                max-width:90%; text-align:center;
+                user-select:none;
+                display:flex; flex-direction:column; align-items:center; gap:12px;
+            " onmousedown="startDragText(event)" ontouchstart="startDragTextTouch(event)"
+               onmouseenter="this.style.borderColor='rgba(92,26,35,.4)'"
+               onmouseleave="this.style.borderColor='transparent'">
+                <div id="preview-title" style="
+                    font-family:Georgia,serif;
+                    font-size:clamp(18px, 3.5vw + 8px, 42px);
+                    font-weight:bold; color:#5c1a23;
+                    line-height:1.2; pointer-events:none;
+                "></div>
+                <div id="preview-subtitle" style="
+                    font-size:clamp(12px, 1.5vw + 5px, 20px);
+                    color:#4a2e2b; line-height:1.5; pointer-events:none;
+                "></div>
+                <a id="preview-btn" href="#" style="
+                    display:none; background:#769b21; color:white;
+                    padding:12px 30px; border-radius:30px; text-decoration:none;
+                    font-weight:bold; font-size:15px; pointer-events:none; white-space:nowrap;
+                ">Buton</a>
+            </div>
+        </div>
+    </div>
+
+
                 <h4 style="color: #4a2e2b; margin: 10px 0; font-size: 15px; border-left: 4px solid #5c1a23; padding-left: 10px;">Panouri active pe site</h4>
                 <div id="hero-slides-list">
                     <p style="color:#777; font-size:13px; padding:10px 0;">Nu există panouri configurate. Adaugă primul panou folosind formularul de mai sus.</p>
+                </div>
+            </div>
+            
+            <!-- ══════════════════════════════════════════ -->
+            <!-- SECTIUNEA 4: Galerie           -->
+            <!-- ══════════════════════════════════════════ -->
+            <div class="admin-box">
+                <h3>📸 Adaugă în Galerie</h3>
+                <form id="add-gallery-form">
+                    <input type="text" id="gallery-title" placeholder="Titlu poză" required>
+                    <input type="file" id="gallery-file" accept="image/*" required>
+                    <button type="submit">Încarcă</button>
+                </form>
+            </div>
+
+            <!-- ══════════════════════════════════════════ -->
+            <!-- SECTIUNEA 5: Management Galerie           -->
+            <!-- ══════════════════════════════════════════ -->
+            <div class="admin-box">
+                <h3>🖼️ Administrare Galerie</h3>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Imagine</th>
+                            <th>Titlu</th>
+                            <th>Autor</th>
+                            <th>Acțiuni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-gallery-list">
+                        </tbody>
+                </table>
+            </div>
+
+            <!-- ══════════════════════════════════════════ -->
+            <!-- SECTIUNEA 6: MODERARE RECENZII             -->
+            <!-- ══════════════════════════════════════════ -->
+            <div class="admin-box" style="width:100%;">
+                <h3>⭐ Moderare Recenzii</h3>
+                <p style="color:#777; font-size:13px; margin-bottom:16px;">
+                    Recenziile noi apar ca <strong>In asteptare</strong> si nu sunt vizibile public pana la aprobare.
+                </p>
+
+                <!-- Tabs status -->
+                <div style="display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap;">
+                    <button class="review-tab-btn active" data-status="pending"  onclick="switchReviewTab('pending')"  style="padding:7px 16px; border-radius:20px; border:2px solid #f39c12; background:#fff3cd; color:#856404; font-weight:bold; cursor:pointer; font-size:13px;">⏳ In asteptare <span id="badge-pending" style="background:#f39c12;color:white;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;">0</span></button>
+                    <button class="review-tab-btn"        data-status="approved" onclick="switchReviewTab('approved')" style="padding:7px 16px; border-radius:20px; border:2px solid #769b21; background:#f0f7e6; color:#3d5211; font-weight:bold; cursor:pointer; font-size:13px;">✅ Aprobate <span id="badge-approved" style="background:#769b21;color:white;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;">0</span></button>
+                    <button class="review-tab-btn"        data-status="rejected" onclick="switchReviewTab('rejected')" style="padding:7px 16px; border-radius:20px; border:2px solid #dc3545; background:#fdecea; color:#7d1a1a; font-weight:bold; cursor:pointer; font-size:13px;">❌ Respinse <span id="badge-rejected" style="background:#dc3545;color:white;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;">0</span></button>
+                </div>
+
+                <div id="admin-reviews-list" style="display:flex; flex-direction:column; gap:12px;">
+                    <p style="color:#aaa; font-size:13px; padding:10px;">Se incarca recenziile...</p>
                 </div>
             </div>
 
@@ -593,5 +788,9 @@
 
     <script src="script.js"></script>
     <script src="admin.js"></script>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- PREVIEW FULL-SIZE HERO (modal overlay)     -->
+    <!-- ══════════════════════════════════════════ -->
 </body>
 </html>

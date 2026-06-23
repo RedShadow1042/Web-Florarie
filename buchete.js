@@ -71,22 +71,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkLoggedInUser() {
         const currentUser = JSON.parse(localStorage.getItem('floraria_current_user'));
         const navMenuList = document.querySelector('.main-nav ul');
-        
         if (currentUser) {
-            const userIconLink = document.querySelector('.icon-user');
-            if (userIconLink) {
-                userIconLink.innerHTML = `👤 <span style="font-size: 14px; margin-left: 5px; font-family: Arial, sans-serif;">${currentUser.name}</span>`;
-                userIconLink.style.width = 'auto';
-                userIconLink.style.padding = '0 15px';
-                userIconLink.style.borderRadius = '30px';
-                userIconLink.href = 'autentificare.html';
+            const icon = document.querySelector('.icon-user');
+            if (icon) {
+                icon.innerHTML = `<span style="font-size:20px;">👤</span><span style="font-size:13px;margin-left:6px;white-space:nowrap;">${currentUser.name}</span>`;
+                icon.style.cssText = 'display:flex;align-items:center;width:auto;height:44px;padding:0 14px;border-radius:22px;background:rgba(255,255,255,0.15);color:white;text-decoration:none;cursor:pointer;';
+                icon.href = 'autentificare.html';
             }
-
             if (currentUser.role === 'admin' && navMenuList) {
                 if (!document.getElementById('admin-nav-link')) {
                     const adminLi = document.createElement('li');
                     adminLi.id = 'admin-nav-link';
-                    adminLi.innerHTML = `<a href="admin.html" style="color: #ffcccc;">Panou Admin</a>`;
+                    adminLi.innerHTML = `<a href="admin.html" style="color:#ffcccc;">Panou Admin</a>`;
                     navMenuList.appendChild(adminLi);
                 }
             }

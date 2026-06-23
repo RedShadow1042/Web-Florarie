@@ -2,181 +2,179 @@
 window.addEventListener('DOMContentLoaded', () => {
     setupAdminPanelLogic();
     setupHeroAdmin();
+    setupReviewsAdmin();
+    setupGalleryAdmin();
+    setupGalleryManagement()
 });
 
 // ══════════════════════════════════════════
-// SECȚIUNEA 1 & 2: CATALOG + COMENZI
+// SECTIUNEA 1 & 2: CATALOG + COMENZI (MySQL)
 // ══════════════════════════════════════════
 function setupAdminPanelLogic() {
-    const form = document.getElementById('add-bouquet-form');
-    const bouquetListContainer = document.getElementById('admin-bouquets-list');
-    const activeOrdersContainer = document.getElementById('admin-active-orders-list');
+    const form                     = document.getElementById('add-bouquet-form');
+    const bouquetListContainer     = document.getElementById('admin-bouquets-list');
+    const activeOrdersContainer    = document.getElementById('admin-active-orders-list');
     const completedOrdersContainer = document.getElementById('admin-completed-orders-list');
-    const searchBar = document.getElementById('order-search-bar');
+    const searchBar                = document.getElementById('order-search-bar');
 
-    if (!bouquetListContainer || !activeOrdersContainer || !completedOrdersContainer) {
-        console.error("Eroare: Containerele pentru tabele nu au fost găsite.");
-        return;
+    if (!bouquetListContainer || !activeOrdersContainer || !completedOrdersContainer) return;
+
+    // Helper API
+    async function api(url, method, body) {
+        const res = await fetch(url, {
+            method: method || 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            body: body ? JSON.stringify(body) : undefined
+        });
+        return res.json();
     }
 
-    // 1. Randare catalog
-    function renderAdminCatalog() {
-        let catalog = JSON.parse(localStorage.getItem('floraria_bouquets')) || [];
+    // ── 1. Catalog produse ──────────────────
+    async function renderAdminCatalog() {
+        bouquetListContainer.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:15px;">Se incarca...</td></tr>';
+        const catalog = await api('api/products.php?action=all');
         bouquetListContainer.innerHTML = '';
 
-        if (catalog.length === 0) {
-            bouquetListContainer.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#777;">Nu există produse adăugate.</td></tr>';
+        if (!Array.isArray(catalog) || catalog.length === 0) {
+            bouquetListContainer.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#777;">Nu exista produse adaugate.</td></tr>';
             return;
         }
 
-        catalog.forEach((bouquet, index) => {
+        catalog.forEach(bouquet => {
             const tr = document.createElement('tr');
-            // FIX: curățăm "LEI" duplicat din preț — prețul poate fi string "123 LEI" sau număr 123
-            const cleanPrice = String(bouquet.price).replace(/\s*lei/gi, '').trim();
             tr.innerHTML = `
-                <td><img src="${bouquet.image}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;" onerror="this.src='Imagini/blank_image.jpg'"></td>
+                <td><img src="${bouquet.image}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;" onerror="this.src='Imagini/blank_image.jpg'"></td>
                 <td><strong>${bouquet.name}</strong></td>
-                <td>${cleanPrice} LEI</td>
+                <td>${bouquet.price} LEI</td>
                 <td>${bouquet.discount || 0}%</td>
-                <td><input type="checkbox" onchange="toggleActiveStatus(${index})" ${bouquet.active !== false ? 'checked' : ''}></td>
+                <td><input type="checkbox" ${bouquet.active ? 'checked' : ''} data-id="${bouquet.id}" onchange="toggleActiveStatus(this)"></td>
                 <td>
-                    <button class="edit-btn" style="background:#f39c12; color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer; margin-right:5px;" onclick="window.location.href='edit-produs.html?index=${index}'">Editează</button>
-                    <button class="delete-btn" style="background:#dc3545; color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer;" data-index="${index}">Șterge</button>
-                </td>
-            `;
+                    <button style="background:#f39c12;color:white;border:none;padding:5px 8px;border-radius:4px;cursor:pointer;margin-right:5px;"
+                        onclick="window.location.href='edit-produs.html?id=${bouquet.id}'">Editeaza</button>
+                    <button style="background:#dc3545;color:white;border:none;padding:5px 8px;border-radius:4px;cursor:pointer;"
+                        data-id="${bouquet.id}" data-name="${bouquet.name}" class="delete-product-btn">Sterge</button>
+                </td>`;
             bouquetListContainer.appendChild(tr);
         });
 
-        bouquetListContainer.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const idx = e.target.getAttribute('data-index');
-                let currentCatalog = JSON.parse(localStorage.getItem('floraria_bouquets')) || [];
-                if (confirm(`Sigur vrei să ștergi produsul "${currentCatalog[idx].name}"?`)) {
-                    currentCatalog.splice(idx, 1);
-                    localStorage.setItem('floraria_bouquets', JSON.stringify(currentCatalog));
-                    renderAdminCatalog();
-                }
+        bouquetListContainer.querySelectorAll('.delete-product-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id   = e.target.getAttribute('data-id');
+                const name = e.target.getAttribute('data-name');
+                if (!confirm(`Sigur vrei sa stergi produsul "${name}"?`)) return;
+                const res = await api('api/products.php?action=delete', 'DELETE', { id });
+                if (res.error) { alert(res.error); return; }
+                renderAdminCatalog();
             });
         });
     }
 
-    window.toggleActiveStatus = (index) => {
-        let catalog = JSON.parse(localStorage.getItem('floraria_bouquets')) || [];
-        catalog[index].active = !catalog[index].active;
-        localStorage.setItem('floraria_bouquets', JSON.stringify(catalog));
+    window.toggleActiveStatus = async (checkbox) => {
+        const id     = checkbox.getAttribute('data-id');
+        const active = checkbox.checked;
+        await api('api/products.php?action=toggle', 'POST', { id, active });
     };
 
-    // 2. Randare Comenzi
-    function renderAdminOrders(filterKeyword = '') {
-        let orders = JSON.parse(localStorage.getItem('floraria_orders')) || [];
-        activeOrdersContainer.innerHTML = '';
+    // ── 2. Comenzi ─────────────────────────
+    let _allOrders = [];
+
+    async function loadAndRenderOrders(filterKeyword = '') {
+        activeOrdersContainer.innerHTML    = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:15px;">Se incarca...</td></tr>';
         completedOrdersContainer.innerHTML = '';
+        _allOrders = await api('api/orders.php?action=all');
+        renderAdminOrders(filterKeyword);
+    }
 
-        orders.forEach((order, globalIndex) => {
-            const clientName = order.user || order.customerName || 'Client Anonim';
-            const orderTotal = order.total !== undefined ? order.total : (order.totalPrice || 0);
-            const orderIdStr = (order.id || `CMD-${globalIndex + 1001}`).toString();
-            const searchStr = filterKeyword.toLowerCase().trim();
+    function renderAdminOrders(filterKeyword = '') {
+        activeOrdersContainer.innerHTML    = '';
+        completedOrdersContainer.innerHTML = '';
+        const searchStr = filterKeyword.toLowerCase().trim();
 
-            if (searchStr !== '' && !orderIdStr.toLowerCase().includes(searchStr) && !clientName.toLowerCase().includes(searchStr)) return;
+        _allOrders.forEach(order => {
+            const clientName = order.customer_name || 'Client Anonim';
+            if (searchStr && !order.id.toLowerCase().includes(searchStr) && !clientName.toLowerCase().includes(searchStr)) return;
 
-            const orderStatus = (order.status === 'completed') ? 'completed' : 'active';
-
-            // FIX: suportăm atât 'items' cât și 'products' (cart.js salvează ambele chei)
-            const itemsArray = order.items || order.products || [];
-            let produseText = Array.isArray(itemsArray)
-                ? itemsArray.map(item => `${item.name} (${item.price} LEI)`).join(', ')
-                : 'Produse nespecificate';
+            const items = Array.isArray(order.items) ? order.items : [];
+            const produseText = items.map(i => `${i.name} (${i.price} LEI)`).join(', ') || 'Produse nespecificate';
+            const isActive = order.status !== 'completed';
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><code>#${orderIdStr.replace('CMD-', '')}</code></td>
+                <td><code>#${order.id.replace('CMD-','')}</code></td>
                 <td><strong>${clientName}</strong></td>
                 <td>${produseText}</td>
-                <td style="color:#769b21; font-weight:bold;">${orderTotal} LEI</td>
+                <td style="color:#769b21;font-weight:bold;">${order.total} LEI</td>
                 <td><small>${order.date || 'N/A'}</small></td>
-                <td style="display: flex; gap: 8px; align-items: center; padding: 10px;">
-                    ${orderStatus === 'active'
-                        ? `<button class="btn-status-success complete-order-btn" style="padding: 4px 8px; font-size: 11px; cursor: pointer;" data-index="${globalIndex}">Finalizează ✓</button>`
-                        : '<span style="color:#769b21; font-weight:bold; font-size:12px;">Finalizată</span>'
+                <td style="display:flex;gap:8px;align-items:center;padding:10px;">
+                    ${isActive
+                        ? `<button class="btn-status-success" style="padding:4px 8px;font-size:11px;cursor:pointer;" data-id="${order.id}">Finalizeaza ✓</button>`
+                        : '<span style="color:#769b21;font-weight:bold;font-size:12px;">Finalizata</span>'
                     }
-                    <button class="btn-status-danger delete-order-btn" style="padding: 4px 8px; font-size: 11px; cursor: pointer;" data-index="${globalIndex}">Elimină ✕</button>
-                </td>
-            `;
+                    <button class="btn-status-danger" style="padding:4px 8px;font-size:11px;cursor:pointer;" data-id="${order.id}">Elimina ✕</button>
+                </td>`;
 
-            if (orderStatus === 'active') activeOrdersContainer.appendChild(tr);
+            tr.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const oid = btn.getAttribute('data-id');
+                    if (btn.classList.contains('btn-status-success')) {
+                        await api('api/orders.php?action=status', 'POST', { id: oid, status: 'completed' });
+                    } else {
+                        if (!confirm('Stergi comanda definitiv?')) return;
+                        await api('api/orders.php?action=delete', 'DELETE', { id: oid });
+                    }
+                    await loadAndRenderOrders(searchBar ? searchBar.value : '');
+                });
+            });
+
+            if (isActive) activeOrdersContainer.appendChild(tr);
             else completedOrdersContainer.appendChild(tr);
         });
 
-        if (activeOrdersContainer.innerHTML === '') {
-            activeOrdersContainer.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#777; padding:20px;">Nu există comenzi active.</td></tr>';
-        }
-        if (completedOrdersContainer.innerHTML === '') {
-            completedOrdersContainer.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#777; padding:20px;">Nu există comenzi finalizate.</td></tr>';
-        }
-
-        document.querySelectorAll('.complete-order-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                let currentOrders = JSON.parse(localStorage.getItem('floraria_orders'));
-                currentOrders[e.target.getAttribute('data-index')].status = 'completed';
-                localStorage.setItem('floraria_orders', JSON.stringify(currentOrders));
-                renderAdminOrders(searchBar.value);
-            });
-        });
-
-        document.querySelectorAll('.delete-order-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                let currentOrders = JSON.parse(localStorage.getItem('floraria_orders'));
-                currentOrders.splice(e.target.getAttribute('data-index'), 1);
-                localStorage.setItem('floraria_orders', JSON.stringify(currentOrders));
-                renderAdminOrders(searchBar.value);
-            });
-        });
+        if (!activeOrdersContainer.innerHTML)    activeOrdersContainer.innerHTML    = '<tr><td colspan="6" style="text-align:center;color:#777;padding:20px;">Nu exista comenzi active.</td></tr>';
+        if (!completedOrdersContainer.innerHTML) completedOrdersContainer.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#777;padding:20px;">Nu exista comenzi finalizate.</td></tr>';
     }
 
-    if (searchBar) searchBar.addEventListener('input', (e) => renderAdminOrders(e.target.value));
+    if (searchBar) searchBar.addEventListener('input', e => renderAdminOrders(e.target.value));
 
-    // 3. Adăugare produs nou
+    // ── 3. Adaugare produs nou ──────────────
     if (form) {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const name = document.getElementById('bouquet-name').value;
-            const price = document.getElementById('bouquet-price').value;
-            const discount = document.getElementById('bouquet-discount').value;
-            const desc = document.getElementById('bouquet-desc').value;
+            const btn       = form.querySelector('button[type="submit"]');
+            const name      = document.getElementById('bouquet-name').value.trim();
+            const price     = document.getElementById('bouquet-price').value;
+            const discount  = document.getElementById('bouquet-discount').value;
+            const desc      = document.getElementById('bouquet-desc').value.trim();
             const fileInput = document.getElementById('bouquet-image');
 
-            let catalog = JSON.parse(localStorage.getItem('floraria_bouquets')) || [];
-            const newBouquet = {
-                name,
-                price: parseInt(price),
-                discount: parseInt(discount) || 0,
-                desc,
-                active: true,
-                image: 'Imagini/blank_image.jpg'
+            btn.disabled = true;
+            btn.textContent = 'Se salveaza...';
+
+            const saveProduct = async (imageSrc) => {
+                const res = await api('api/products.php?action=add', 'POST', {
+                    name, price: parseInt(price), discount: parseInt(discount) || 0,
+                    desc, image: imageSrc || 'Imagini/blank_image.jpg'
+                });
+                btn.disabled = false;
+                btn.textContent = 'Adauga Produs';
+                if (res.error) { alert(res.error); return; }
+                alert('Produsul a fost adaugat!');
+                form.reset();
+                renderAdminCatalog();
             };
 
             if (fileInput && fileInput.files && fileInput.files[0]) {
                 const reader = new FileReader();
-                reader.onload = (ev) => {
-                    newBouquet.image = ev.target.result;
-                    catalog.push(newBouquet);
-                    localStorage.setItem('floraria_bouquets', JSON.stringify(catalog));
-                    form.reset();
-                    renderAdminCatalog();
-                };
+                reader.onload = ev => saveProduct(ev.target.result);
                 reader.readAsDataURL(fileInput.files[0]);
             } else {
-                catalog.push(newBouquet);
-                localStorage.setItem('floraria_bouquets', JSON.stringify(catalog));
-                form.reset();
-                renderAdminCatalog();
+                saveProduct(null);
             }
         });
     }
 
     renderAdminCatalog();
-    renderAdminOrders();
+    loadAndRenderOrders();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -286,122 +284,258 @@ window.rteClear = (editorId) => {
     syncHeroPreview();
 };
 
-// Sincronizare preview live
-window.syncHeroPreview = () => {
-    const titleEl    = document.getElementById('hero-title');
-    const subtitleEl = document.getElementById('hero-subtitle');
-    const btnTextEl  = document.getElementById('hero-btn-text');
-    const btnLinkEl  = document.getElementById('hero-btn-link');
-    const bgTextEl   = document.getElementById('hero-bg-color-text');
-    const bgColorEl  = document.getElementById('hero-bg-color');
-    const previewBox = document.getElementById('hero-preview');
+// ══════════════════════════════════════════
+// PREVIEW LIVE — pozitii independente
+// ══════════════════════════════════════════
 
-    if (titleEl)    document.getElementById('preview-title').innerHTML    = titleEl.innerHTML || '<span style="color:#aaa">Titlul panoului tău</span>';
-    if (subtitleEl) document.getElementById('preview-subtitle').innerHTML = subtitleEl.innerHTML || '<span style="color:#aaa">Subtitlul mesajului</span>';
-    if (btnTextEl)  {
-        const btn = document.getElementById('preview-btn');
-        btn.textContent = btnTextEl.value || 'Buton';
-        btn.style.display = btnTextEl.value ? 'inline-block' : 'none';
-    }
-    if (btnLinkEl)  document.getElementById('preview-btn').href = btnLinkEl.value || '#';
-    if (previewBox) {
-        const bg = (bgTextEl && bgTextEl.value.trim()) || (bgColorEl && bgColorEl.value) || '#f5ebe1';
-        previewBox.style.background = bg;
-    }
+// Debounce pentru text sync (tastat)
+let _syncPreviewTimer = null;
+window.syncHeroPreview = () => {
+    clearTimeout(window._syncTimer);
+    window._syncTimer = setTimeout(_doSyncHeroPreview, 150);
 };
+
+function _doSyncHeroPreview() {
+    const g = id => document.getElementById(id);
+    const previewBox = g('hero-preview');
+    if (!previewBox) return;
+
+    // ── Text ──
+    const ptitle = g('preview-title');
+    const psub   = g('preview-subtitle');
+    const pbtn   = g('preview-btn');
+
+    if (ptitle) {
+        const html = g('hero-title')?.innerHTML || '';
+        ptitle.innerHTML = (html && html !== '<br>') ? html : '<span style="opacity:.3">Titlul panoului</span>';
+    }
+    if (psub) {
+        const html = g('hero-subtitle')?.innerHTML || '';
+        psub.innerHTML = (html && html !== '<br>') ? html : '<span style="opacity:.25">Subtitlul</span>';
+    }
+    if (pbtn) {
+        const txt = g('hero-btn-text')?.value || '';
+        pbtn.textContent   = txt || 'Buton';
+        pbtn.style.display = txt ? 'inline-block' : 'none';
+    }
+    const btnLink = g('hero-btn-link');
+    if (pbtn && btnLink) pbtn.href = btnLink.value || '#';
+
+    // ── Fundal ──
+    const imgData = g('hero-bg-image-data')?.value || '';
+    const bgImg   = g('preview-bg-img');
+    if (imgData) {
+        if (bgImg) { bgImg.src = imgData; bgImg.style.display = 'block'; }
+        previewBox.style.background = '#111';
+    } else {
+        if (bgImg) bgImg.style.display = 'none';
+        const bgTxt = g('hero-bg-color-text')?.value.trim() || '';
+        const bgCol = g('hero-bg-color')?.value || '#f5ebe1';
+        previewBox.style.background = bgTxt || bgCol;
+    }
+
+    // ── Gradient overlay ──
+    const overlay = g('preview-overlay');
+    if (overlay) {
+        const dir = g('hero-gradient-dir')?.value || 'to right';
+        const str = parseInt(g('hero-gradient-strength')?.value || 55);
+        overlay.style.background = imgData
+            ? `linear-gradient(${dir}, rgba(0,0,0,${(str/100).toFixed(2)}) 0%, rgba(0,0,0,0) 70%)`
+            : 'none';
+    }
+
+    _applyPreviewPos();
+}
+
+function _applyPreviewPos() {
+    const px = parseFloat(document.getElementById('hero-pos-x')?.value ?? 50);
+    const py = parseFloat(document.getElementById('hero-pos-y')?.value ?? 50);
+    const block = document.getElementById('preview-content');
+    if (block) {
+        block.style.left      = px + '%';
+        block.style.top       = py + '%';
+        block.style.transform = 'translate(-50%, -50%)';
+    }
+    const dx = document.getElementById('preview-pos-x');
+    const dy = document.getElementById('preview-pos-y');
+    if (dx) dx.textContent = Math.round(px);
+    if (dy) dy.textContent = Math.round(py);
+}
+
+window.updatePosFromInputs = () => _applyPreviewPos();
+
+window.setPresetPos = (x, y) => {
+    const xEl = document.getElementById('hero-pos-x');
+    const yEl = document.getElementById('hero-pos-y');
+    if (xEl) xEl.value = x;
+    if (yEl) yEl.value = y;
+    _applyPreviewPos();
+};
+
+window.openHeroPreview  = () => {};
+window.closeHeroPreview = () => {};
+
+// ── Drag bloc text ca un grup ──
+window.startDragText = (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const preview = document.getElementById('hero-preview');
+    const block   = document.getElementById('preview-content');
+    if (!preview || !block) return;
+    block.style.cursor = 'grabbing';
+    const move = ev => _moveDragTo(ev.clientX, ev.clientY);
+    const up   = () => {
+        block.style.cursor = 'grab';
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+    };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+    _moveDragTo(e.clientX, e.clientY);
+};
+
+window.startDragTextTouch = (e) => {
+    if (!e.touches?.[0]) return;
+    e.preventDefault();
+    _moveDragTo(e.touches[0].clientX, e.touches[0].clientY);
+    const move = ev => { if (ev.touches?.[0]) _moveDragTo(ev.touches[0].clientX, ev.touches[0].clientY); };
+    const up   = () => { document.removeEventListener('touchmove', move); document.removeEventListener('touchend', up); };
+    document.addEventListener('touchmove', move, { passive: false });
+    document.addEventListener('touchend', up);
+};
+
+function _moveDragTo(clientX, clientY) {
+    const preview = document.getElementById('hero-preview');
+    if (!preview) return;
+    const rect = preview.getBoundingClientRect();
+    const px = Math.max(2, Math.min(98, Math.round((clientX - rect.left) / rect.width  * 100)));
+    const py = Math.max(2, Math.min(98, Math.round((clientY - rect.top)  / rect.height * 100)));
+    const xEl = document.getElementById('hero-pos-x');
+    const yEl = document.getElementById('hero-pos-y');
+    if (xEl) xEl.value = px;
+    if (yEl) yEl.value = py;
+    _applyPreviewPos();
+}
+
+
+
+
+
 
 // ══════════════════════════════════════════
 // SECȚIUNEA 3: HERO SECTIONS ADMIN
 // ══════════════════════════════════════════
 function setupHeroAdmin() {
-    const STORAGE_KEY = 'floraria_hero_slides';
-
-    // Salvăm selecția când editorul pierde focus-ul (click pe toolbar)
+    // Salvam selectia cand editorul pierde focus
     ['hero-title', 'hero-subtitle'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         const editorId = id.replace('hero-', '');
-        el.addEventListener('mouseup',  () => saveSelection(editorId));
-        el.addEventListener('keyup',    () => saveSelection(editorId));
-        el.addEventListener('blur',     () => saveSelection(editorId));
+        el.addEventListener('mouseup', () => saveSelection(editorId));
+        el.addEventListener('keyup',   () => saveSelection(editorId));
+        el.addEventListener('blur',    () => saveSelection(editorId));
     });
 
-    // Culoare fundal — color picker sincronizat cu câmpul text
     const bgColorPicker = document.getElementById('hero-bg-color');
     const bgColorText   = document.getElementById('hero-bg-color-text');
     const heroPreview   = document.getElementById('hero-preview');
 
-    if (bgColorPicker) {
-        bgColorPicker.addEventListener('input', () => {
-            if (bgColorText) bgColorText.value = bgColorPicker.value;
-            heroPreview.style.background = bgColorPicker.value;
+    if (bgColorPicker) bgColorPicker.addEventListener('input', () => {
+        if (bgColorText) bgColorText.value = bgColorPicker.value;
+        heroPreview.style.background = bgColorPicker.value;
+    });
+    if (bgColorText) bgColorText.addEventListener('input', () => {
+        heroPreview.style.background = bgColorText.value;
+        if (/^#[0-9a-f]{6}$/i.test(bgColorText.value.trim()) && bgColorPicker) bgColorPicker.value = bgColorText.value.trim();
+        syncHeroPreview();
+    });
+
+    // Helper API
+    async function heroApi(action, method, body) {
+        const res = await fetch(`api/hero.php?action=${action}`, {
+            method: method || 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            body: body ? JSON.stringify(body) : undefined
         });
+        return res.json();
     }
 
-    if (bgColorText) {
-        bgColorText.addEventListener('input', () => {
-            heroPreview.style.background = bgColorText.value;
-            if (/^#[0-9a-f]{6}$/i.test(bgColorText.value.trim()) && bgColorPicker) {
-                bgColorPicker.value = bgColorText.value.trim();
-            }
-            syncHeroPreview();
-        });
-    }
+    // Cache local al slide-urilor (pentru editare)
+    let _slides = [];
 
-    // Randare listă panouri
-    function renderHeroList() {
+    async function renderHeroList() {
         const list = document.getElementById('hero-slides-list');
-        const slides = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        list.innerHTML = '<p style="color:#aaa;font-size:13px;padding:10px 0;">Se incarca...</p>';
+        _slides = await heroApi('all');
 
-        if (slides.length === 0) {
-            list.innerHTML = '<p style="color:#777; font-size:13px; padding:10px 0;">Nu există panouri configurate. Adaugă primul panou folosind formularul de mai sus.</p>';
+        if (!Array.isArray(_slides) || _slides.length === 0) {
+            list.innerHTML = '<p style="color:#777;font-size:13px;padding:10px 0;">Nu exista panouri configurate. Adauga primul panou folosind formularul de mai sus.</p>';
             return;
         }
 
         list.innerHTML = '';
-
-        slides.forEach((slide, index) => {
+        _slides.forEach((slide, index) => {
             const card = document.createElement('div');
             card.className = 'hero-admin-card';
-
-            const bgIsGradient = slide.bg && slide.bg.includes('gradient');
-            const bgPreviewStyle = `background:${slide.bg || '#f5ebe1'}; width:40px; height:40px; border-radius:6px; border:1px solid #ccc; flex-shrink:0;`;
-
-            // Afișăm text simplu (fără html) în preview card
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = slide.title || '';
-            const plainTitle = tempDiv.textContent || '(fără titlu)';
+            const plainTitle = tempDiv.textContent || '(fara titlu)';
             tempDiv.innerHTML = slide.subtitle || '';
-            const plainSub = tempDiv.textContent || '(fără subtitlu)';
+            const plainSub = tempDiv.textContent || '(fara subtitlu)';
 
             card.innerHTML = `
-                <div style="${bgPreviewStyle}"></div>
+                <div style="background:${slide.bg||'#f5ebe1'};width:40px;height:40px;border-radius:6px;border:1px solid #ccc;flex-shrink:0;"></div>
                 <div class="hero-admin-card-body">
                     <strong>${plainTitle}</strong>
                     <span>${plainSub}</span>
-                    ${slide.btnText ? `<span style="display:block; margin-top:3px; font-size:12px;">🔗 ${slide.btnText} → ${slide.btnLink || '#'}</span>` : ''}
+                    ${slide.btn_text ? `<span style="display:block;margin-top:3px;font-size:12px;">🔗 ${slide.btn_text} → ${slide.btn_link||'#'}</span>` : ''}
                 </div>
                 <div class="hero-admin-actions">
                     <div class="hero-order-btns">
-                        <button onclick="moveHeroSlide(${index}, -1)" title="Mută sus" ${index === 0 ? 'disabled' : ''}>▲</button>
-                        <button onclick="moveHeroSlide(${index}, 1)" title="Mută jos" ${index === slides.length - 1 ? 'disabled' : ''}>▼</button>
+                        <button onclick="moveHeroSlide(${slide.id},'up')" ${index===0?'disabled':''}>▲</button>
+                        <button onclick="moveHeroSlide(${slide.id},'down')" ${index===_slides.length-1?'disabled':''}>▼</button>
                     </div>
-                    <span class="hero-badge ${slide.active !== false ? 'activ' : 'inactiv'}" 
-                          style="cursor:pointer;" 
-                          onclick="toggleHeroActive(${index})" 
-                          title="Click pentru a activa/dezactiva">
-                        ${slide.active !== false ? 'Activ' : 'Inactiv'}
+                    <span class="hero-badge ${slide.active?'activ':'inactiv'}" style="cursor:pointer;"
+                          onclick="toggleHeroActive(${slide.id},${slide.active})" title="Click pentru activa/dezactiva">
+                        ${slide.active ? 'Activ' : 'Inactiv'}
                     </span>
-                    <button onclick="editHeroSlide(${index})" style="background:#f39c12; color:white; border:none; padding:5px 9px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">✏️</button>
-                    <button onclick="deleteHeroSlide(${index})" style="background:#dc3545; color:white; border:none; padding:5px 9px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">✕</button>
-                </div>
-            `;
+                    <button onclick="editHeroSlide(${slide.id})" style="background:#f39c12;color:white;border:none;padding:5px 9px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:12px;">✏️</button>
+                    <button onclick="deleteHeroSlide(${slide.id},'${plainTitle.replace(/'/g,"\\'")}')" style="background:#dc3545;color:white;border:none;padding:5px 9px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:12px;">✕</button>
+                </div>`;
             list.appendChild(card);
         });
     }
 
-    // Salvare panou
-    window.saveHeroSlide = () => {
+
+    // ── Upload imagine fundal ──
+    window.handleHeroBgImage = (input) => {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        if (file.size > 5 * 1024 * 1024) { alert('Imaginea trebuie sa fie mai mica de 5MB.'); input.value = ''; return; }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = e.target.result;
+            document.getElementById('hero-bg-image-data').value        = data;
+            document.getElementById('img-upload-thumb').src            = data;
+            document.getElementById('img-upload-preview').style.display = 'block';
+            document.getElementById('img-upload-label').innerHTML =
+                '<span>\u2705 ' + file.name + '</span>' +
+                '<input type="file" id="hero-bg-image-file" accept="image/*" style="display:none;" onchange="handleHeroBgImage(this)">';
+            clearTimeout(_syncPreviewTimer); _doSyncHeroPreview();
+        };
+        reader.readAsDataURL(file);
+    };
+
+    window.clearHeroBgImage = () => {
+        document.getElementById('hero-bg-image-data').value         = '';
+        document.getElementById('img-upload-preview').style.display = 'none';
+        document.getElementById('img-upload-thumb').src             = '';
+        document.getElementById('img-upload-label').innerHTML =
+            '<span>\ud83d\udcc1 Click pentru a alege imaginea</span>' +
+            '<input type="file" id="hero-bg-image-file" accept="image/*" style="display:none;" onchange="handleHeroBgImage(this)">';
+        clearTimeout(_syncPreviewTimer); _doSyncHeroPreview();
+    };
+
+    window.saveHeroSlide = async () => { try {
         const titleEl    = document.getElementById('hero-title');
         const subtitleEl = document.getElementById('hero-subtitle');
         const title    = titleEl ? titleEl.innerHTML.trim() : '';
@@ -410,118 +544,281 @@ function setupHeroAdmin() {
         const btnLink  = document.getElementById('hero-btn-link').value.trim();
         const bgText   = document.getElementById('hero-bg-color-text').value.trim();
         const bgColor  = bgText || document.getElementById('hero-bg-color').value;
-        const editIdx  = parseInt(document.getElementById('hero-edit-index').value);
+        const editId   = parseInt(document.getElementById('hero-edit-index').value);
+        const imgData  = document.getElementById('hero-bg-image-data').value;
+        const posX    = parseInt(document.getElementById('hero-pos-x')?.value) || 50;
+        const posY    = parseInt(document.getElementById('hero-pos-y')?.value) || 50;
+        const gradDir = document.getElementById('hero-gradient-dir')?.value || 'to right';
+        const gradStr = parseInt(document.getElementById('hero-gradient-strength')?.value || 55);
 
-        // Considerăm gol dacă conține doar placeholder sau e cu adevărat gol
-        const isEmpty = (html) => !html || html === '' || html === '<br>';
-        if (isEmpty(title) && isEmpty(subtitle)) {
-            alert('Adaugă cel puțin un titlu sau un subtitlu pentru panou.');
-            return;
-        }
+        const isEmpty = h => !h || h === '' || h === '<br>';
+        if (isEmpty(title) && isEmpty(subtitle)) { alert('Adauga cel putin un titlu sau subtitlu.'); return; }
 
-        let slides = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-
-        if (slides.length >= 5 && editIdx === -1) {
-            alert('Poți adăuga maxim 5 panouri. Șterge unul existent pentru a adăuga altul nou.');
-            return;
-        }
-
-        // Salvăm HTML-ul (cu formatare inline) direct
-        const newSlide = { title, subtitle, btnText, btnLink, bg: bgColor, active: true };
-
-        if (editIdx >= 0) {
-            newSlide.active = slides[editIdx].active;
-            slides[editIdx] = newSlide;
+        const posData = { posX, posY };
+        let res;
+        if (editId > 0) {
+            res = await heroApi('edit', 'POST', { id: editId, title, subtitle, btnText, btnLink, bg: bgColor, bgImage: imgData, ...posData, gradDir, gradStr });
         } else {
-            slides.push(newSlide);
+            if (_slides.length >= 5) { alert('Poti adauga maxim 5 panouri.'); return; }
+            res = await heroApi('add', 'POST', { title, subtitle, btnText, btnLink, bg: bgColor, bgImage: imgData, ...posData, gradDir, gradStr });
         }
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(slides));
+        if (res.error) { alert(res.error); return; }
         resetHeroForm();
         renderHeroList();
-        alert(editIdx >= 0 ? 'Panoul a fost actualizat!' : 'Panoul a fost adăugat cu succes!');
-    };
+        alert(editId > 0 ? 'Panoul a fost actualizat!' : 'Panoul a fost adaugat cu succes!');
+    } catch(err) { console.error('saveHeroSlide error:', err); alert('Eroare: ' + err.message); } };
 
-    // Editare panou — populează editorii rich text
-    window.editHeroSlide = (index) => {
-        const slides = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-        const s = slides[index];
+    window.editHeroSlide = (id) => {
+        const s = _slides.find(sl => sl.id == id);
+        if (!s) return;
+        document.getElementById('hero-title').innerHTML    = s.title || '';
+        document.getElementById('hero-subtitle').innerHTML = s.subtitle || '';
+        document.getElementById('hero-btn-text').value     = s.btn_text || '';
+        document.getElementById('hero-btn-link').value     = s.btn_link || '';
+        document.getElementById('hero-bg-color-text').value= s.bg || '#f5ebe1';
+        document.getElementById('hero-bg-color').value     = /^#[0-9a-f]{6}$/i.test(s.bg) ? s.bg : '#f5ebe1';
+        document.getElementById('hero-edit-index').value   = s.id;
+        document.getElementById('hero-pos-x').value = s.pos_x != null ? s.pos_x : 50;
+        document.getElementById('hero-pos-y').value = s.pos_y != null ? s.pos_y : 50;
+        if (s.grad_dir) document.getElementById('hero-gradient-dir').value = s.grad_dir;
+        if (s.grad_str) { document.getElementById('hero-gradient-strength').value = s.grad_str; document.getElementById('grad-str-val').textContent = s.grad_str + '%'; }
 
-        const titleEl    = document.getElementById('hero-title');
-        const subtitleEl = document.getElementById('hero-subtitle');
+        // Imagine
+        if (s.bg_image) {
+            document.getElementById('hero-bg-image-data').value = s.bg_image;
+            document.getElementById('img-upload-thumb').src = s.bg_image;
+            document.getElementById('img-upload-preview').style.display = 'block';
+            document.getElementById('img-upload-label').textContent = '✅ Imagine existentă';
+        } else {
+            window.clearHeroBgImage();
+        }
 
-        if (titleEl)    titleEl.innerHTML    = s.title || '';
-        if (subtitleEl) subtitleEl.innerHTML = s.subtitle || '';
-
-        document.getElementById('hero-btn-text').value          = s.btnText || '';
-        document.getElementById('hero-btn-link').value          = s.btnLink || '';
-        document.getElementById('hero-bg-color-text').value     = s.bg || '#f5ebe1';
-        document.getElementById('hero-bg-color').value          = /^#[0-9a-f]{6}$/i.test(s.bg) ? s.bg : '#f5ebe1';
-        document.getElementById('hero-edit-index').value        = index;
-
-        // Preview
-        document.getElementById('preview-title').innerHTML    = s.title || '';
-        document.getElementById('preview-subtitle').innerHTML = s.subtitle || '';
-        document.getElementById('preview-btn').textContent    = s.btnText || 'Buton';
-        document.getElementById('preview-btn').href           = s.btnLink || '#';
-        document.getElementById('hero-preview').style.background = s.bg || '#f5ebe1';
-
-        document.getElementById('hero-form-title').textContent = 'Editează Panoul';
+        document.getElementById('hero-form-title').textContent  = 'Editeaza Panoul';
         document.getElementById('hero-cancel-btn').style.display = 'inline-block';
-
-        document.getElementById('hero-title').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        clearTimeout(_syncPreviewTimer); _doSyncHeroPreview();
+        document.getElementById('hero-title').scrollIntoView({ behavior:'smooth', block:'center' });
     };
 
     window.cancelHeroEdit = () => resetHeroForm();
 
     function resetHeroForm() {
-        const titleEl    = document.getElementById('hero-title');
-        const subtitleEl = document.getElementById('hero-subtitle');
-        if (titleEl)    titleEl.innerHTML    = '';
-        if (subtitleEl) subtitleEl.innerHTML = '';
-
-        document.getElementById('hero-btn-text').value          = '';
-        document.getElementById('hero-btn-link').value          = '';
-        document.getElementById('hero-bg-color-text').value     = '';
-        document.getElementById('hero-bg-color').value          = '#f5ebe1';
-        document.getElementById('hero-edit-index').value        = '-1';
-        document.getElementById('hero-form-title').textContent  = 'Adaugă Panou Nou';
+        document.getElementById('hero-title').innerHTML    = '';
+        document.getElementById('hero-subtitle').innerHTML = '';
+        document.getElementById('hero-btn-text').value     = '';
+        document.getElementById('hero-btn-link').value     = '';
+        document.getElementById('hero-bg-color-text').value= '';
+        document.getElementById('hero-bg-color').value     = '#f5ebe1';
+        document.getElementById('hero-edit-index').value   = '-1';
+        document.getElementById('hero-pos-x').value = '50';
+        document.getElementById('hero-pos-y').value = '50';
+        if (document.getElementById('hero-gradient-dir')) document.getElementById('hero-gradient-dir').value = 'to right';
+        if (document.getElementById('hero-gradient-strength')) { document.getElementById('hero-gradient-strength').value = '55'; document.getElementById('grad-str-val').textContent = '55%'; }
+        document.getElementById('hero-form-title').textContent = 'Adauga Panou Nou';
         document.getElementById('hero-cancel-btn').style.display = 'none';
-
-        document.getElementById('preview-title').innerHTML    = '<span style="color:#aaa">Titlul panoului tău</span>';
-        document.getElementById('preview-subtitle').innerHTML = '<span style="color:#aaa">Subtitlul sau mesajul promoțional</span>';
-        document.getElementById('preview-btn').textContent    = 'Buton';
-        document.getElementById('preview-btn').href           = '#';
-        document.getElementById('hero-preview').style.background = '#f5ebe1';
+        window.clearHeroBgImage();
+        clearTimeout(_syncPreviewTimer); _doSyncHeroPreview();
     }
 
-    window.deleteHeroSlide = (index) => {
-        const slides = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = slides[index].title || 'fără titlu';
-        if (confirm(`Sigur vrei să ștergi panoul "${tempDiv.textContent}"?`)) {
-            slides.splice(index, 1);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(slides));
-            renderHeroList();
-        }
-    };
-
-    window.toggleHeroActive = (index) => {
-        let slides = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-        slides[index].active = slides[index].active === false ? true : false;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(slides));
+    window.deleteHeroSlide = async (id, name) => {
+        if (!confirm(`Sigur vrei sa stergi panoul "${name}"?`)) return;
+        const res = await heroApi('delete', 'DELETE', { id });
+        if (res.error) { alert(res.error); return; }
         renderHeroList();
     };
 
-    window.moveHeroSlide = (index, direction) => {
-        let slides = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-        const newIndex = index + direction;
-        if (newIndex < 0 || newIndex >= slides.length) return;
-        [slides[index], slides[newIndex]] = [slides[newIndex], slides[index]];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(slides));
+    window.toggleHeroActive = async (id, currentActive) => {
+        await heroApi('toggle', 'POST', { id, active: !currentActive });
+        renderHeroList();
+    };
+
+    window.moveHeroSlide = async (id, direction) => {
+        await heroApi('reorder', 'POST', { id, direction });
         renderHeroList();
     };
 
     renderHeroList();
-    syncHeroPreview();
+    clearTimeout(_syncPreviewTimer); _doSyncHeroPreview();
+}
+
+// ══════════════════════════════════════════
+// SECTIUNEA GALERIE
+// ══════════════════════════════════════════
+
+// 1. Adăugare poze
+function setupGalleryAdmin() {
+    const form = document.getElementById('add-gallery-form');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fileInput = document.getElementById('gallery-file');
+        const titleInput = document.getElementById('gallery-title');
+        const file = fileInput.files[0];
+        if (!file) return alert("Selectează o poză!");
+
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+            const payload = {
+                image: reader.result,
+                title: titleInput.value,
+                made_by: currentUser ? currentUser.username : 'Admin'
+            };
+            
+            const res = await fetch('api/gallery.php?action=add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Adăugat!');
+                form.reset();
+                // Reîncărcăm și lista pentru a vedea poza nouă
+                if (typeof loadGalleryAdmin === 'function') loadGalleryAdmin();
+            } else {
+                alert('Eroare: ' + (data.error || 'Necunoscut'));
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// 2. Administrare (Ștergere)
+function setupGalleryManagement() {
+    const listContainer = document.getElementById('admin-gallery-list');
+    if (!listContainer) return;
+
+    // Definim loadGalleryAdmin global pentru a putea fi apelat din alte funcții
+    window.loadGalleryAdmin = async function() {
+        const listContainer = document.getElementById('admin-gallery-list');
+        if (!listContainer) return;
+        
+        const res = await fetch('api/gallery.php?action=all');
+        const items = await res.json();
+        
+        listContainer.innerHTML = items.map(item => `
+            <tr>
+                <td><img src="${item.image}" style="width:60px; height:60px; object-fit:cover; border-radius:4px;"></td>
+                <td>${item.title}</td>
+                <td>${item.made_by}</td>
+                <td>
+                    <button onclick="deleteGalleryItem(${item.id})" class="btn-delete">Șterge</button>
+                </td>
+            </tr>
+        `).join('');
+    };
+
+    window.deleteGalleryItem = async (id) => {
+        if (!confirm('Sigur ștergi?')) return;
+        await fetch('api/gallery.php?action=delete', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        loadGalleryAdmin();
+    };
+
+    loadGalleryAdmin();
+}
+
+
+// ══════════════════════════════════════════
+// SECTIUNEA 5: MODERARE RECENZII
+// ══════════════════════════════════════════
+function setupReviewsAdmin() {
+    let _reviews    = [];
+    let _activeTab  = 'pending';
+
+    async function loadReviews() {
+        const res = await fetch('api/reviews.php?action=all');
+        _reviews  = await res.json();
+        if (!Array.isArray(_reviews)) _reviews = [];
+        updateBadges();
+        renderReviewsForTab(_activeTab);
+    }
+
+    function updateBadges() {
+        ['pending','approved','rejected'].forEach(s => {
+            const el = document.getElementById(`badge-${s}`);
+            if (el) el.textContent = _reviews.filter(r => r.status === s).length;
+        });
+    }
+
+    function renderReviewsForTab(status) {
+        const container = document.getElementById('admin-reviews-list');
+        if (!container) return;
+        const filtered = _reviews.filter(r => r.status === status);
+
+        if (!filtered.length) {
+            container.innerHTML = `<p style="color:#aaa;font-size:13px;padding:10px;">Nu exista recenzii cu statusul "${status}".</p>`;
+            return;
+        }
+
+        container.innerHTML = '';
+        filtered.forEach(review => {
+            const stars = Array.from({length:5}, (_,i) =>
+                `<span style="color:${i < review.rating ? '#f5a623' : '#ddd'}">★</span>`
+            ).join('');
+
+            const typeLabel = review.type === 'general'
+                ? '<span style="background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:bold;">🌿 Florarie</span>'
+                : `<span style="background:#fff3e0;color:#e65100;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:bold;">🌸 ${review.product_name || 'Produs'}</span>`;
+
+            const card = document.createElement('div');
+            card.style.cssText = 'background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 2px 8px rgba(92,26,35,0.08);display:flex;flex-direction:column;gap:8px;';
+            card.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <div style="font-size:18px;">${stars}</div>
+                        ${typeLabel}
+                        <span style="font-size:13px;color:#888;">👤 ${escAdmin(review.user_name)}</span>
+                        <span style="font-size:12px;color:#bbb;">📅 ${new Date(review.created_at).toLocaleDateString('ro-RO')}</span>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                        ${status !== 'approved'  ? `<button onclick="setReviewStatus(${review.id},'approved')"  style="padding:5px 10px;background:#769b21;color:white;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:bold;">✅ Aproba</button>` : ''}
+                        ${status !== 'rejected'  ? `<button onclick="setReviewStatus(${review.id},'rejected')"  style="padding:5px 10px;background:#e67e22;color:white;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:bold;">❌ Respinge</button>` : ''}
+                        ${status !== 'pending'   ? `<button onclick="setReviewStatus(${review.id},'pending')"   style="padding:5px 10px;background:#aaa;color:white;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:bold;">⏳ Pending</button>` : ''}
+                        <button onclick="deleteReview(${review.id})" style="padding:5px 10px;background:#dc3545;color:white;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:bold;">🗑 Sterge</button>
+                    </div>
+                </div>
+                <div style="font-weight:bold;color:#5c1a23;font-size:15px;">${escAdmin(review.title)}</div>
+                <div style="font-size:14px;color:#555;line-height:1.5;">${escAdmin(review.body)}</div>
+                ${review.image ? `<img src="${review.image}" style="max-width:140px;max-height:120px;object-fit:cover;border-radius:8px;border:1px solid #f0e6e0;">` : ''}
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function escAdmin(str) {
+        return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    window.switchReviewTab = function(status) {
+        _activeTab = status;
+        document.querySelectorAll('.review-tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-status') === status);
+        });
+        renderReviewsForTab(status);
+    };
+
+    window.setReviewStatus = async function(id, status) {
+        await fetch('api/reviews.php?action=status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, status })
+        });
+        await loadReviews();
+    };
+
+    window.deleteReview = async function(id) {
+        if (!confirm('Stergi aceasta recenzie definitiv?')) return;
+        await fetch('api/reviews.php?action=delete', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        await loadReviews();
+    };
+
+    loadReviews();
 }

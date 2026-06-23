@@ -40,16 +40,16 @@ body {
 .hero-section {
     position: relative;
     width: 100%;
-    height: 450px;
+    height: clamp(300px, 42vw, 420px);
     margin-bottom: 40px;
     display: flex;
     justify-content: center;
     align-items: center;
     background: linear-gradient(180deg, rgba(245, 235, 235, 1) 0%, rgba(242, 223, 182, 1) 100%);
     overflow: hidden;
-    border-bottom: 15px solid #d3875b;
-    border-left: 15px solid #d3875b;
-    border-right: 15px solid #d3875b;
+    border-bottom: 10px solid #d3875b;
+    border-left: 10px solid #d3875b;
+    border-right: 10px solid #d3875b;
 }
 
 .hero-dots {
@@ -402,20 +402,21 @@ body {
     font-weight: bold;
 }
 
+/* =============================================
+   HERO SLIDES
+   ============================================= */
 .hero-slide {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.7s ease-in-out, visibility 0.7s ease-in-out;
+    overflow: hidden;
+    /* Centrare implicita pentru slide-urile statice din HTML */
     display: flex;
     justify-content: center;
     align-items: center;
-    text-align: center;
-    padding: 0 20px;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.8s ease-in-out, visibility 0.8s ease-in-out;
 }
 
 .hero-slide.active {
@@ -423,33 +424,126 @@ body {
     visibility: visible;
 }
 
+/* Slide-urile dinamice (JS) isi pozitioneaza singure .hero-content;
+   dezactivam flex ca sa nu interfereze */
+.hero-slide.has-dynamic-content {
+    display: block;
+}
+
+/* Pe mobile mic, slide-urile dinamice revin la centrare normala
+   — ignoram pos_x/pos_y din DB care ar iesi din ecran */
+@media (max-width: 600px) {
+    .hero-slide.has-dynamic-content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    /* Fortam pozitionarea din JS sa fie anulata pe mobile */
+    .hero-slide.has-dynamic-content .hero-content {
+        position: static !important;
+        transform: none !important;
+        left: auto !important;
+        top: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding-bottom: 44px !important;
+    }
+}
+
+/* ── Hero content (bloc text) ── */
 .hero-content {
-    max-width: 800px;
-    width: 100%;
+    max-width: min(760px, 86vw);
+    width: 86vw;
+    box-sizing: border-box;
+    padding: clamp(10px, 2vw, 20px) clamp(16px, 3vw, 32px) clamp(44px, 6vw, 56px);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(10px, 1.8vw, 18px);
 }
 
 .hero-content h2 {
-    font-size: 42px;
-    margin-bottom: 20px;
+    font-size: clamp(16px, 2.8vw + 6px, 38px);
+    margin: 0;
     color: #5c1a23;
+    line-height: 1.25;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
 }
 
 .hero-content p {
-    font-size: 20px;
+    font-size: clamp(13px, 1.2vw + 5px, 18px);
     color: #4a2e2b;
-    margin-bottom: 35px;
-    line-height: 1.6;
+    margin: 0;
+    line-height: 1.55;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .hero-btn {
     display: inline-block;
-    padding: 14px 35px;
+    padding: clamp(9px, 1.2vw, 14px) clamp(20px, 2.8vw, 36px);
     background-color: #769b21;
     color: #ffffff;
     font-weight: bold;
     text-decoration: none;
     border-radius: 30px;
+    font-size: clamp(13px, 1vw + 4px, 17px);
+    white-space: nowrap;
+    max-width: 80vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
 }
+
+/* ── Hero: tablete mici / telefoane mari (500px – 768px) ── */
+@media (max-width: 768px) {
+    .hero-section {
+        height: clamp(220px, 48vw, 340px);
+    }
+    .hero-content {
+        width: 88vw;
+        max-width: 88vw;
+        gap: clamp(6px, 1.4vw, 12px);
+        padding: clamp(8px, 1.5vw, 16px) clamp(12px, 2.5vw, 24px) clamp(36px, 5vw, 48px);
+    }
+    /* !important suprascrie font-size inline setat din editorul admin (ex: <span style="font-size:80px">) */
+    .hero-content h2,
+    .hero-content h2 * { font-size: clamp(14px, 3.4vw, 24px) !important; line-height: 1.25 !important; }
+    .hero-content p,
+    .hero-content p *  { font-size: clamp(12px, 2vw, 15px) !important; line-height: 1.45 !important; }
+    .hero-btn          { font-size: clamp(12px, 1.8vw, 15px); padding: clamp(7px, 1vw, 11px) clamp(16px, 2.5vw, 28px); }
+}
+
+/* ── Hero: mobile mic (sub 500px) ── */
+@media (max-width: 500px) {
+    .hero-section {
+        height: auto;
+        min-height: 210px;
+        padding: 16px 0 46px 0; /* spatiu pt dots jos */
+        border-left-width: 5px;
+        border-right-width: 5px;
+        border-bottom-width: 5px;
+    }
+    .hero-content {
+        width: 90vw;
+        max-width: 90vw;
+        padding: 6px 10px 0 10px;
+        gap: 8px;
+    }
+    .hero-content h2,
+    .hero-content h2 * { font-size: clamp(13px, 4.8vw, 19px) !important; line-height: 1.2 !important; }
+    .hero-content p,
+    .hero-content p *  { font-size: clamp(11px, 3.2vw, 13px) !important; line-height: 1.4 !important; }
+    .hero-btn        { font-size: 12px; padding: 7px 18px; }
+    .hero-dots       { bottom: 14px; gap: 8px; }
+    .dot             { width: 9px; height: 9px; }
+    .dot.active      { width: 11px; height: 11px; }
+}
+
+
 
 .auth-container {
     display: flex;
@@ -859,24 +953,10 @@ body {
     }
 
     .hero-section {
-        height: 400px; 
-        padding: 15px;
-        margin-bottom: 30px;
-    }
-
-    .hero-content h2 {
-        font-size: 26px;
-        margin-bottom: 15px;
-    }
-
-    .hero-content p {
-        font-size: 16px;
-        margin-bottom: 25px;
-    }
-
-    .hero-btn {
-        padding: 12px 30px;
-        font-size: 16px;
+        border-left-width: 7px;
+        border-right-width: 7px;
+        border-bottom-width: 7px;
+        margin-bottom: 20px;
     }
 
     .products-class-title {

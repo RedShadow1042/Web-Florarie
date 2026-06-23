@@ -4,11 +4,7 @@
     <meta charset="UTF-8">
     <title>Editare Produs</title>
     <style>
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: linear-gradient(180deg, rgba(242, 223, 182, 1) 25%, rgba(123, 27, 56, 1) 100%);
-            display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; 
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #9ab5df 0%, #506a94 100%); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
         h2 { text-align: center; color: #444; margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; }
@@ -19,54 +15,101 @@
         button { flex: 1; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-save { background: #769b21; color: white; }
         .btn-cancel { background: #e0e0e0; color: #555; }
+        #status { text-align: center; margin-top: 10px; color: #dc3545; font-size: 14px; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>Editează Buchetul</h2>
+        <h2>Editeaza Buchetul</h2>
+        <div id="status"></div>
         <form id="edit-form">
             <img id="current-img" class="preview-img" src="" alt="Imagine produs">
-            <div class="form-group"><label>Imagine nouă:</label><input type="file" id="edit-image" accept="image/*"></div>
+            <div class="form-group"><label>Imagine noua:</label><input type="file" id="edit-image" accept="image/*"></div>
             <div class="form-group"><label>Nume:</label><input type="text" id="edit-name" required></div>
-            <div class="form-group"><label>Preț (LEI):</label><input type="number" id="edit-price" required></div>
-            <div class="form-group"><label>Reducere (%):</label><input type="number" id="edit-discount"></div>
+            <div class="form-group"><label>Pret (LEI):</label><input type="number" id="edit-price" required></div>
+            <div class="form-group"><label>Reducere (%):</label><input type="number" id="edit-discount" value="0"></div>
+            <div class="form-group"><label>Descriere:</label><input type="text" id="edit-desc"></div>
             <div class="actions">
                 <button type="button" class="btn-cancel" onclick="history.back()">Anulare</button>
-                <button type="submit" class="btn-save">Salvează</button>
+                <button type="submit" class="btn-save" id="save-btn">Salveaza</button>
             </div>
         </form>
     </div>
     <script>
         const params = new URLSearchParams(window.location.search);
-        const index = params.get('index');
-        let catalog = JSON.parse(localStorage.getItem('floraria_bouquets')) || [];
-        const item = catalog[index];
+        const productId = params.get('id');
+        const statusEl  = document.getElementById('status');
 
-        document.getElementById('current-img').src = item.image;
-        document.getElementById('edit-name').value = item.name;
-        document.getElementById('edit-price').value = item.price;
-        document.getElementById('edit-discount').value = item.discount || 0;
+        if (!productId) {
+            statusEl.textContent = 'Eroare: ID produs lipsa.';
+        } else {
+            // Incarcare date produs din API
+            fetch(`api/products.php?action=all`)
+                .then(r => r.json())
+                .then(catalog => {
+                    const item = catalog.find(p => String(p.id) === String(productId));
+                    if (!item) { statusEl.textContent = 'Produsul nu a fost gasit.'; return; }
+                    document.getElementById('current-img').src = item.image;
+                    document.getElementById('edit-name').value     = item.name;
+                    document.getElementById('edit-price').value    = item.price;
+                    document.getElementById('edit-discount').value = item.discount || 0;
+                    document.getElementById('edit-desc').value     = item.description || '';
+                })
+                .catch(() => { statusEl.textContent = 'Eroare la incarcarea produsului.'; });
+        }
 
-        document.getElementById('edit-form').onsubmit = (e) => {
+        document.getElementById('edit-form').onsubmit = async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('save-btn');
+            btn.disabled = true;
+            btn.textContent = 'Se salveaza...';
+
             const fileInput = document.getElementById('edit-image');
-            const saveChanges = (imgSrc) => {
-                catalog[index].name = document.getElementById('edit-name').value;
-                catalog[index].price = parseInt(document.getElementById('edit-price').value);
-                catalog[index].discount = parseInt(document.getElementById('edit-discount').value);
-                if (imgSrc) catalog[index].image = imgSrc;
-                localStorage.setItem('floraria_bouquets', JSON.stringify(catalog));
-                alert("Modificări salvate!");
-                window.location.href = 'admin.html';
+
+            const saveChanges = async (imgSrc) => {
+                const body = {
+                    id:       productId,
+                    name:     document.getElementById('edit-name').value,
+                    price:    parseInt(document.getElementById('edit-price').value),
+                    discount: parseInt(document.getElementById('edit-discount').value) || 0,
+                    desc:     document.getElementById('edit-desc').value
+                };
+                if (imgSrc) body.image = imgSrc;
+
+                try {
+                    const res  = await fetch('api/products.php?action=edit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    const data = await res.json();
+                    if (data.error) { statusEl.textContent = data.error; btn.disabled = false; btn.textContent = 'Salveaza'; return; }
+                    alert('Modificari salvate!');
+                    window.location.href = 'admin.html';
+                } catch(err) {
+                    statusEl.textContent = 'Eroare de conexiune.';
+                    btn.disabled = false;
+                    btn.textContent = 'Salveaza';
+                }
             };
+
             if (fileInput.files && fileInput.files[0]) {
                 const reader = new FileReader();
-                reader.onload = (ev) => saveChanges(ev.target.result);
+                reader.onload = ev => saveChanges(ev.target.result);
                 reader.readAsDataURL(fileInput.files[0]);
             } else {
-                saveChanges();
+                saveChanges(null);
             }
         };
+
+        // Preview imagine noua inainte de salvare
+        document.getElementById('edit-image').addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = ev => document.getElementById('current-img').src = ev.target.result;
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
     </script>
 </body>
 </html>

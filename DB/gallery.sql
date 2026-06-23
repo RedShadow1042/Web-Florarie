@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS `gallery` (
+    `id`          INT AUTO_INCREMENT PRIMARY KEY,
+    `image`       LONGTEXT NOT NULL,
+    `title`       VARCHAR(255),
+    `created_at`  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `made_by`     VARCHAR(150) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -68,8 +68,10 @@
                     </div>
                     <div class="input-group">
                         <label for="login-password">Parolă</label>
-                        <input type="password" id="login-password" required style="padding-right: 65px;">
-                        <span class="toggle-password-eye" onclick="togglePasswordVisibility('login-password')"></span>
+                        <div style="position:relative;">
+                            <input type="password" id="login-password" required style="padding-right: 65px;">
+                            <span class="toggle-password-eye" onclick="togglePasswordVisibility('login-password')" style="top:50%;transform:translateY(-50%);"></span>
+                        </div>
                     </div>
                     <button type="submit" class="view-details">Intră în cont</button>
                 </form>
@@ -88,12 +90,23 @@
                     </div>
                     <div class="input-group">
                         <label for="reg-password">Parolă</label>
-                        <input type="password" id="reg-password" required style="padding-right: 65px;">
-                        <span class="toggle-password-eye" onclick="togglePasswordVisibility('reg-password')"></span>
-                    </div>
-                    <div class="input-group checkbox-group">
-                        <input type="checkbox" id="reg-is-admin">
-                        <label for="reg-is-admin">Sunt Administrator (Cont special)</label>
+                        <div style="position:relative;">
+                            <input type="password" id="reg-password" required style="padding-right: 65px;" oninput="checkPasswordStrength(this.value, 'reg')">
+                            <span class="toggle-password-eye" onclick="togglePasswordVisibility('reg-password')" style="top:50%;transform:translateY(-50%);"></span>
+                        </div>
+                        <div class="pwd-strength-wrap" id="reg-strength-wrap" style="display:none;">
+                            <div class="pwd-bar-track">
+                                <div class="pwd-bar-fill" id="reg-bar"></div>
+                            </div>
+                            <span class="pwd-label" id="reg-label"></span>
+                        </div>
+                        <ul class="pwd-checklist" id="reg-checklist">
+                            <li id="reg-c-len">✗ Minim 8 caractere</li>
+                            <li id="reg-c-upper">✗ O literă mare (A-Z)</li>
+                            <li id="reg-c-lower">✗ O literă mică (a-z)</li>
+                            <li id="reg-c-num">✗ Un număr (0-9)</li>
+                            <li id="reg-c-special">✗ Un caracter special (!@#$...)</li>
+                        </ul>
                     </div>
                     <button type="submit" class="add-to-cart">Înregistrare</button>
                 </form>
@@ -101,6 +114,210 @@
         </div>
     </main>
 
+    <style>
+        /* ── Password strength indicator ── */
+        .pwd-strength-wrap {
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .pwd-bar-track {
+            flex: 1;
+            height: 6px;
+            background: #e8e0d8;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .pwd-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            width: 0%;
+            transition: width .35s ease, background .35s ease;
+        }
+        .pwd-label {
+            font-size: 12px;
+            font-weight: 700;
+            min-width: 70px;
+            text-align: right;
+        }
+
+        /* Checklist cerinte */
+        .pwd-checklist {
+            list-style: none;
+            padding: 8px 0 0 0;
+            margin: 0;
+            display: none;
+        }
+        .pwd-checklist li {
+            font-size: 12px;
+            color: #b0a098;
+            margin-bottom: 3px;
+            transition: color .2s;
+            padding-left: 2px;
+        }
+        .pwd-checklist li.ok {
+            color: #769b21;
+        }
+    </style>
+
     <script src="auth.js"></script>
-</body>
+    <script>
+        // ── Password strength checker ──────────────
+        function checkPasswordStrength(val, prefix) {
+            const wrap     = document.getElementById(`${prefix}-strength-wrap`);
+            const bar      = document.getElementById(`${prefix}-bar`);
+            const label    = document.getElementById(`${prefix}-label`);
+            const list     = document.getElementById(`${prefix}-checklist`);
+            if (!wrap || !bar || !label) return;
+
+            if (!val) {
+                wrap.style.display = 'none';
+                if (list) list.style.display = 'none';
+                return;
+            }
+
+            wrap.style.display = 'flex';
+            if (list) list.style.display = 'block';
+
+            // Cerinte
+            const checks = {
+                len:     val.length >= 8,
+                upper:   /[A-Z]/.test(val),
+                lower:   /[a-z]/.test(val),
+                num:     /[0-9]/.test(val),
+                special: /[^A-Za-z0-9]/.test(val)
+            };
+
+            // Actualizeaza checklist
+            Object.entries(checks).forEach(([key, ok]) => {
+                const li = document.getElementById(`${prefix}-c-${key}`);
+                if (!li) return;
+                li.classList.toggle('ok', ok);
+                li.textContent = (ok ? '✓ ' : '✗ ') + li.textContent.slice(2);
+            });
+
+            // Scor 0-5
+            const score = Object.values(checks).filter(Boolean).length;
+
+            // Bonus pentru lungime extra
+            const bonus = val.length >= 12 ? 1 : 0;
+            const total = Math.min(score + bonus, 5);
+
+            const levels = [
+                { pct: 0,   color: '',          text: '',           textColor: '' },
+                { pct: 20,  color: '#e74c3c',   text: 'Foarte slabă', textColor: '#e74c3c' },
+                { pct: 40,  color: '#e67e22',   text: 'Slabă',        textColor: '#e67e22' },
+                { pct: 60,  color: '#f5a623',   text: 'Medie',        textColor: '#f5a623' },
+                { pct: 80,  color: '#27ae60',   text: 'Puternică',    textColor: '#27ae60' },
+                { pct: 100, color: '#1a8a45',   text: 'Foarte puternică', textColor: '#1a8a45' },
+            ];
+
+            const lvl = levels[total];
+            bar.style.width     = `${lvl.pct}%`;
+            bar.style.background = lvl.color;
+            label.textContent   = lvl.text;
+            label.style.color   = lvl.textColor;
+        }
+
+        // ── Modal schimbare parola ─────────────────
+        function openPwdModal() {
+            document.getElementById('pwd-modal').style.display = 'flex';
+            document.getElementById('modal-old-pwd').value = '';
+            document.getElementById('modal-new-pwd').value = '';
+            document.getElementById('modal-pwd-status').textContent = '';
+            const wrap = document.getElementById('modal-strength-wrap');
+            const list = document.getElementById('modal-checklist');
+            if (wrap) wrap.style.display = 'none';
+            if (list) list.style.display = 'none';
+            setTimeout(() => document.getElementById('modal-old-pwd').focus(), 100);
+        }
+
+        function closePwdModal() {
+            document.getElementById('pwd-modal').style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('pwd-modal')?.addEventListener('click', function(e) {
+                if (e.target === this) closePwdModal();
+            });
+            // Suprascrie butonul din auth.js
+            const btnPass = document.getElementById('open-modal-password');
+            if (btnPass) btnPass.onclick = openPwdModal;
+        });
+
+        async function submitNewPassword() {
+            const status = document.getElementById('modal-pwd-status');
+            const oldPwd = document.getElementById('modal-old-pwd').value;
+            const newPwd = document.getElementById('modal-new-pwd').value.trim();
+            const btn    = document.getElementById('modal-submit-btn');
+            const currentUser = JSON.parse(localStorage.getItem('floraria_current_user'));
+            if (!currentUser) return;
+
+            if (!oldPwd) { status.style.color='#dc3545'; status.textContent='Introdu parola curentă.'; return; }
+            if (newPwd.length < 4) { status.style.color='#dc3545'; status.textContent='Parola nouă trebuie să aibă minim 4 caractere.'; return; }
+
+            btn.disabled = true; btn.textContent = 'Se salvează...';
+
+            const checkRes = await fetch('api/users.php?action=check_password', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ id: currentUser.id, password: oldPwd })
+            }).then(r=>r.json()).catch(()=>({ error:'Eroare de conexiune.' }));
+
+            if (checkRes.error) {
+                status.style.color='#dc3545'; status.textContent=checkRes.error;
+                btn.disabled=false; btn.textContent='Salvează Parola'; return;
+            }
+
+            const res = await fetch('api/users.php?action=update', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ id: currentUser.id, key:'password', value: newPwd })
+            }).then(r=>r.json()).catch(()=>({ error:'Eroare de conexiune.' }));
+
+            if (res.error) {
+                status.style.color='#dc3545'; status.textContent=res.error;
+            } else {
+                status.style.color='#769b21'; status.textContent='✅ Parola a fost schimbată cu succes!';
+                setTimeout(closePwdModal, 1500);
+            }
+            btn.disabled=false; btn.textContent='Salvează Parola';
+        }
+    </script>
+
+    <!-- Modal schimbare parola -->
+    <div id="pwd-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:center;">
+        <div style="background:white;border-radius:16px;padding:32px;max-width:420px;width:92%;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+            <h3 style="color:#5c1a23;font-family:Georgia,serif;margin:0 0 20px;font-size:20px;">🔑 Schimbă Parola</h3>
+
+            <div style="margin-bottom:14px;">
+                <label style="display:block;font-weight:700;color:#5c1a23;font-size:13px;margin-bottom:6px;">Parola curentă:</label>
+                <input type="password" id="modal-old-pwd" style="width:100%;padding:10px;border:1.5px solid #d4c5bc;border-radius:8px;font-size:14px;box-sizing:border-box;outline:none;">
+            </div>
+
+            <div style="margin-bottom:6px;">
+                <label style="display:block;font-weight:700;color:#5c1a23;font-size:13px;margin-bottom:6px;">Parola nouă:</label>
+                <input type="password" id="modal-new-pwd"
+                    style="width:100%;padding:10px;border:1.5px solid #d4c5bc;border-radius:8px;font-size:14px;box-sizing:border-box;outline:none;"
+                    oninput="checkPasswordStrength(this.value, 'modal')">
+                <div class="pwd-strength-wrap" id="modal-strength-wrap" style="display:none;">
+                    <div class="pwd-bar-track"><div class="pwd-bar-fill" id="modal-bar"></div></div>
+                    <span class="pwd-label" id="modal-label"></span>
+                </div>
+                <ul class="pwd-checklist" id="modal-checklist">
+                    <li id="modal-c-len">✗ Minim 8 caractere</li>
+                    <li id="modal-c-upper">✗ O literă mare (A-Z)</li>
+                    <li id="modal-c-lower">✗ O literă mică (a-z)</li>
+                    <li id="modal-c-num">✗ Un număr (0-9)</li>
+                    <li id="modal-c-special">✗ Un caracter special (!@#$...)</li>
+                </ul>
+            </div>
+
+            <div id="modal-pwd-status" style="font-size:13px;min-height:18px;margin:10px 0;text-align:center;"></div>
+
+            <div style="display:flex;gap:10px;margin-top:16px;">
+                <button onclick="closePwdModal()" style="flex:1;padding:11px;border-radius:8px;border:1.5px solid #d4c5bc;background:#fdfaf8;color:#888;font-weight:700;font-size:14px;cursor:pointer;">Anulează</button>
+                <button onclick="submitNewPassword()" id="modal-submit-btn" style="flex:1;padding:11px;border-radius:8px;border:none;background:#769b21;color:white;font-weight:700;font-size:14px;cursor:pointer;">Salvează Parola</button>
+            </div>
+        </div>
+    </div>
 </html>
