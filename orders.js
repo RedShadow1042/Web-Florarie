@@ -1,6 +1,11 @@
 // =============================================
 // orders.js — Istoricul comenzilor clientului
 // =============================================
+
+function escOrders(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 const myOrdersList = document.getElementById('my-orders-list');
 const ordersTitle  = document.getElementById('orders-title');
 
@@ -19,7 +24,10 @@ async function renderMyOrders() {
     myOrdersList.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px;">Se incarca comenzile...</p>';
 
     try {
-        const res = await fetch(`api/orders.php?action=my&email=${encodeURIComponent(currentUser.email)}`);
+        // Emailul vine din sesiunea PHP — nu il mai trimitem in URL
+        const res = await fetch('api/orders.php?action=my', {
+            credentials: 'include'
+        });
         const orders = await res.json();
 
         myOrdersList.innerHTML = '';
@@ -35,22 +43,22 @@ async function renderMyOrders() {
 
             const items = Array.isArray(order.items) ? order.items : [];
             let productsHTML = '';
-            items.forEach(p => { productsHTML += `<li>🌸 ${p.name} - ${p.price} LEI</li>`; });
+            items.forEach(p => { productsHTML += `<li>🌸 ${escOrders(p.name)} - ${escOrders(String(p.price))} LEI</li>`; });
 
             let statusClass = 'status-asteptare';
-            let statusLabel = order.status;
-            if (order.status === 'active')     { statusClass = 'status-asteptare'; statusLabel = 'In procesare'; }
-            if (order.status === 'completed')  { statusClass = 'status-livrata';   statusLabel = 'Finalizata'; }
-            if (order.status === 'Anulata')    { statusClass = 'status-anulata';   statusLabel = 'Anulata'; }
+            let statusLabel = escOrders(order.status);
+            if (order.status === 'active')    { statusClass = 'status-asteptare'; statusLabel = 'In procesare'; }
+            if (order.status === 'completed') { statusClass = 'status-livrata';   statusLabel = 'Finalizata'; }
+            if (order.status === 'Anulata')   { statusClass = 'status-anulata';   statusLabel = 'Anulata'; }
 
             card.innerHTML = `
                 <div class="order-header">
-                    <span class="order-id">${order.id}</span>
-                    <span class="order-date">📅 ${order.date}</span>
+                    <span class="order-id">${escOrders(order.id)}</span>
+                    <span class="order-date">📅 ${escOrders(order.date)}</span>
                 </div>
                 <ul class="order-products-list">${productsHTML}</ul>
                 <div class="order-footer">
-                    <div>Total: <span class="order-total-bold">${order.total} LEI</span></div>
+                    <div>Total: <span class="order-total-bold">${escOrders(String(order.total))} LEI</span></div>
                     <span class="order-status ${statusClass}">${statusLabel}</span>
                 </div>`;
             myOrdersList.appendChild(card);

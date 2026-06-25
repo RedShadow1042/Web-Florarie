@@ -1,71 +1,75 @@
 <?php
-// Încărcăm configurația bazei de date
+// =============================================
+// api/gallery.php — Galerie
+// =============================================
 require_once 'config.php';
-$db = getDB();
+require_once 'validate_image.php';
 
-// Identificăm acțiunea și metoda
 $action = $_GET['action'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'];
+$db     = getDB();
 
-// 1. GET: Returnează toate pozele (pentru afișare în galerie)
+// ── GET: toate pozele (public) ────────────────
 if ($action === 'all' && $method === 'GET') {
-    $res = $db->query("SELECT * FROM gallery ORDER BY id DESC");
+    $res   = $db->query("SELECT * FROM gallery ORDER BY id DESC");
     $items = $res->fetch_all(MYSQLI_ASSOC);
     echo json_encode($items);
+    exit();
 }
 
-// 2. POST: Adaugă o poză nouă (folosit în admin)
-elseif ($action === 'add' && $method === 'POST') {
-    // Preluăm datele trimise prin JSON
-    $json = file_get_contents('php://input');
-    $data = json_decode($json, true);
-    
-    // Verificăm dacă am primit datele
+// ── POST: adauga poza — DOAR ADMIN ────────────
+if ($action === 'add' && $method === 'POST') {
+    requireAdmin();
+    $data = json_decode(file_get_contents('php://input'), true);
+
     if (!$data) {
         http_response_code(400);
-        echo json_encode(['error' => 'Date invalide trimise']);
-        exit;
+        echo json_encode(['error' => 'Date invalide.']);
+        exit();
     }
 
-    $image = $data['image'] ?? '';
-    $title = $db->real_escape_string($data['title'] ?? 'Fără titlu');
-    $made_by = $db->real_escape_string($data['made_by'] ?? 'Admin');
+    $image   = $data['image'] ?? '';
+    $title   = trim($data['title'] ?? 'Fara titlu');
+    $made_by = trim($data['made_by'] ?? 'Admin');
 
     if (empty($image)) {
-        echo json_encode(['error' => 'Imaginea lipsește']);
-        exit;
+        echo json_encode(['error' => 'Imaginea lipseste.']);
+        exit();
     }
 
-    // Inserăm în baza de date
-    $stmt = $db->prepare("INSERT INTO gallery (image, title, made_by) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $image, $title, $made_by);
-    
-    if ($stmt->execute()) {
-        echo json_encode(['success' => true]);
-    } else {
-        // Aici vei vedea eroarea în Network -> Response dacă ceva nu merge
-        echo json_encode(['error' => 'Eroare SQL: ' . $stmt->error]);
+    // Validare imagine
+    $imgCheck = validateBase64Image($image);
+    if (!$imgCheck['valid']) {
+        echo json_encode(['error' => $imgCheck['error']]);
+        exit();
     }
+
+    if (strlen($title) > 200)   { echo json_encode(['error' => 'Titlul este prea lung.']); exit(); }
+    if (strlen($made_by) > 100) { echo json_encode(['error' => 'Numele autorului este prea lung.']); exit(); }
+
+    $stmt = $db->prepare("INSERT INTO gallery (image, title, made_by) VALUES (?, ?, ?)");
+    $stmt->bind_param('sss', $image, $title, $made_by);
+
+    echo $stmt->execute()
+        ? json_encode(['success' => true])
+        : json_encode(['error' => 'Eroare SQL: ' . $stmt->error]);
+    exit();
 }
 
-// 3. DELETE: Șterge o poză
-elseif ($action === 'delete' && $method === 'DELETE') {
+// ── DELETE: sterge poza — DOAR ADMIN ──────────
+if ($action === 'delete' && $method === 'DELETE') {
+    requireAdmin();
     $data = json_decode(file_get_contents('php://input'), true);
-    $id = intval($data['id'] ?? 0);
+    $id   = intval($data['id'] ?? 0);
 
     $stmt = $db->prepare("DELETE FROM gallery WHERE id = ?");
-    $stmt->bind_param("i", $id);
-    
-    if ($stmt->execute()) {
-        echo json_encode(['success' => true]);
-    } else {
-        echo json_encode(['error' => 'Eroare la ștergere: ' . $stmt->error]);
-    }
+    $stmt->bind_param('i', $id);
+
+    echo $stmt->execute()
+        ? json_encode(['success' => true])
+        : json_encode(['error' => 'Eroare la stergere.']);
+    exit();
 }
 
-// Dacă metoda nu este recunoscută
-else {
-    http_response_code(405);
-    echo json_encode(['error' => 'Metodă sau acțiune invalidă']);
-}
-?>
+http_response_code(405);
+echo json_encode(['error' => 'Metoda sau actiune invalida.']);

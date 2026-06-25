@@ -1,6 +1,11 @@
 // =============================================
 // cart.js — Cos de cumparaturi
 // =============================================
+
+function escCart(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 const cartItemsList        = document.getElementById('cart-items-list');
 const cartSummaryBox       = document.getElementById('cart-summary-box');
 const cartTotalPriceElement= document.getElementById('cart-total-price');
@@ -27,9 +32,9 @@ function renderCart() {
         const row = document.createElement('div');
         row.className = 'cart-item-row';
         row.innerHTML = `
-            <div class="cart-item-info"><h4>${product.name}</h4></div>
+            <div class="cart-item-info"><h4>${escCart(product.name)}</h4></div>
             <div class="cart-item-actions">
-                <span class="cart-item-price">${product.price} LEI</span>
+                <span class="cart-item-price">${escCart(String(product.price))} LEI</span>
                 <button class="remove-item-btn" data-index="${index}">❌</button>
             </div>`;
         cartItemsList.appendChild(row);
@@ -71,14 +76,14 @@ if (checkoutBtn) {
 
         try {
             const res = await fetch('api/orders.php?action=place', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method:      'POST',
+                credentials: 'include',
+                headers:     { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    user_id:        currentUser.id,
-                    customer_name:  currentUser.name,
-                    customer_email: currentUser.email,
-                    items:          cart,
-                    total:          total
+                    customer_name: currentUser.name,
+                    items:         cart,
+                    total:         total
+                    // user_id si customer_email vin din sesiunea PHP — nu se mai trimit din client
                 })
             });
             const data = await res.json();

@@ -4,13 +4,15 @@
 
 const API = 'api/users.php';
 
-// Functie helper: apel API
+// credentials: 'include' este OBLIGATORIU pentru ca browser-ul
+// sa trimita cookie-ul de sesiune PHP cu fiecare cerere
 async function apiCall(action, method, body) {
     try {
         const res = await fetch(`${API}?action=${action}`, {
-            method: method || 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            body: body ? JSON.stringify(body) : undefined
+            method:      method || 'GET',
+            credentials: 'include',   // trimite cookie-ul de sesiune
+            headers:     { 'Content-Type': 'application/json' },
+            body:        body ? JSON.stringify(body) : undefined
         });
         return await res.json();
     } catch (e) {
@@ -18,15 +20,13 @@ async function apiCall(action, method, body) {
     }
 }
 
-// Sesiune stocata in sessionStorage (se sterge la inchiderea browserului)
-// Folosim sessionStorage doar ca cache al datelor userului, nu ca autentificare reala
+// Datele userului sunt doar cache local — autentificarea reala e in sesiunea PHP
 function getCurrentUser() {
     return JSON.parse(sessionStorage.getItem('floraria_current_user'));
 }
 function setCurrentUser(user) {
     if (user) {
         sessionStorage.setItem('floraria_current_user', JSON.stringify(user));
-        // Pastram si in localStorage pentru compatibilitate cu cart.js, orders.js etc.
         localStorage.setItem('floraria_current_user', JSON.stringify(user));
     } else {
         sessionStorage.removeItem('floraria_current_user');
@@ -47,7 +47,7 @@ function togglePasswordVisibility(inputId) {
     }
 }
 
-// ── UI: afiseaza panoul corect ────────────────
+// ── UI ────────────────────────────────────────
 const authFormsContainer = document.getElementById('auth-forms');
 const loggedInPanel      = document.getElementById('logged-in-panel');
 const welcomeMessage     = document.getElementById('welcome-message');
@@ -69,7 +69,7 @@ function toggleAuthInterface() {
     }
 }
 
-// ── Inregistrare ─────────────────────────────
+// ── Inregistrare ──────────────────────────────
 const registerForm = document.getElementById('register-form');
 if (registerForm) {
     registerForm.addEventListener('submit', async (e) => {
@@ -79,24 +79,21 @@ if (registerForm) {
         btn.textContent = 'Se proceseaza...';
 
         const data = {
-            name:    document.getElementById('reg-name').value.trim(),
-            email:   document.getElementById('reg-email').value.trim(),
-            password:document.getElementById('reg-password').value.trim(),
-            isAdmin: false
+            name:     document.getElementById('reg-name').value.trim(),
+            email:    document.getElementById('reg-email').value.trim(),
+            password: document.getElementById('reg-password').value
+            // isAdmin nu se mai trimite — backend-ul ignora oricum
         };
 
         const res = await apiCall('register', 'POST', data);
         btn.disabled = false;
         btn.textContent = 'Inregistrare';
 
-        if (res.error) {
-            alert(res.error);
-            return;
-        }
+        if (res.error) { alert(res.error); return; }
 
         setCurrentUser(res.user);
         alert(`Contul a fost creat cu succes! Bine ai venit, ${res.user.name}!`);
-        window.location.href = res.user.role === 'admin' ? 'admin.html' : 'index.html';
+        window.location.href = 'index.html';
     });
 }
 
@@ -111,17 +108,14 @@ if (loginForm) {
 
         const data = {
             email:    document.getElementById('login-email').value.trim(),
-            password: document.getElementById('login-password').value.trim()
+            password: document.getElementById('login-password').value
         };
 
         const res = await apiCall('login', 'POST', data);
         btn.disabled = false;
         btn.textContent = 'Intra in cont';
 
-        if (res.error) {
-            alert(res.error);
-            return;
-        }
+        if (res.error) { alert(res.error); return; }
 
         setCurrentUser(res.user);
         alert(`Bine ai revenit, ${res.user.name}!`);
@@ -132,7 +126,9 @@ if (loginForm) {
 // ── Deconectare ───────────────────────────────
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
+    logoutBtn.addEventListener('click', async () => {
+        // Distrugem sesiunea si pe server, nu doar local
+        await apiCall('logout', 'POST', {});
         setCurrentUser(null);
         alert('Te-ai deconectat cu succes.');
         window.location.href = 'index.html';
@@ -146,12 +142,11 @@ if (deleteAccountBtn) {
         const currentUser = getCurrentUser();
         if (!currentUser) return;
 
-        const confirmFirst = confirm('Esti absolut sigur ca vrei sa iti stergi contul? Aceasta actiune este ireversibila!');
-        if (!confirmFirst) return;
+        if (!confirm('Esti absolut sigur ca vrei sa iti stergi contul?')) return;
 
-        const confirmText = prompt("Pentru confirmare finala, scrie cuvantul 'STERGE':");
+        const confirmText = prompt("Scrie 'STERGE' pentru confirmare:");
         if (confirmText !== 'STERGE' && confirmText !== 'sterge') {
-            if (confirmText !== null) alert('Confirmare respinsa. Textul introdus este gresit.');
+            if (confirmText !== null) alert('Confirmare respinsa.');
             return;
         }
 
@@ -197,18 +192,18 @@ function setupProfileModals() {
 
     if (btnPass) {
         btnPass.onclick = async () => {
-            const oldPass = prompt('Introdu parola curenta pentru verificare:');
+            const oldPass = prompt('Introdu parola curenta:');
             if (oldPass === null) return;
 
             const checkRes = await apiCall('check_password', 'POST', { id: currentUser.id, password: oldPass });
             if (checkRes.error) { alert(checkRes.error); return; }
 
-            const newPass = prompt('Introdu noua parola dorita (minim 4 caractere):');
-            if (!newPass || newPass.trim().length < 4) {
-                alert('Parola este prea scurta (minim 4 caractere).');
+            const newPass = prompt('Introdu noua parola (minim 6 caractere):');
+            if (!newPass || newPass.length < 6) {
+                alert('Parola este prea scurta (minim 6 caractere).');
                 return;
             }
-            const res = await apiCall('update', 'POST', { id: currentUser.id, key: 'password', value: newPass.trim() });
+            const res = await apiCall('update', 'POST', { id: currentUser.id, key: 'password', value: newPass });
             if (res.error) { alert(res.error); return; }
             alert('Parola a fost modificata cu succes!');
         };

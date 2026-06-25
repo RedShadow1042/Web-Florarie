@@ -1,16 +1,12 @@
 <?php
 // =============================================
-// api/products.php — CRUD produse (buchete)
+// api/products.php — CRUD produse
 // =============================================
 require_once 'config.php';
-
-$method = $_SERVER['REQUEST_METHOD'];
-$action = $_GET['action'] ?? '';
-$db     = getDB();
-
-// ── GET: toate produsele ─────────────────────
+require_once 'validate_image.php';
 if ($method === 'GET' && $action === 'all') {
-    $result = $db->query("SELECT * FROM products ORDER BY id ASC");
+    requireAdmin();
+    $result   = $db->query("SELECT * FROM products ORDER BY id ASC");
     $products = [];
     while ($row = $result->fetch_assoc()) {
         $row['active'] = (bool)$row['active'];
@@ -20,9 +16,9 @@ if ($method === 'GET' && $action === 'all') {
     exit();
 }
 
-// ── GET: doar produsele active (pentru site) ─
+// ── GET: produse active (public) ──────────────
 if ($method === 'GET' && ($action === 'active' || $action === '')) {
-    $result = $db->query("SELECT * FROM products WHERE active = 1 ORDER BY id ASC");
+    $result   = $db->query("SELECT * FROM products WHERE active = 1 ORDER BY id ASC");
     $products = [];
     while ($row = $result->fetch_assoc()) {
         $row['active'] = true;
@@ -32,10 +28,10 @@ if ($method === 'GET' && ($action === 'active' || $action === '')) {
     exit();
 }
 
-// ── GET: un produs dupa nume ─────────────────
+// ── GET: produs dupa nume (public) ────────────
 if ($method === 'GET' && $action === 'by_name') {
     $name = $_GET['name'] ?? '';
-    $stmt = $db->prepare("SELECT * FROM products WHERE name = ?");
+    $stmt = $db->prepare("SELECT * FROM products WHERE name = ? AND active = 1");
     $stmt->bind_param('s', $name);
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
@@ -48,18 +44,32 @@ if ($method === 'GET' && $action === 'by_name') {
     exit();
 }
 
-// ── POST: adauga produs ──────────────────────
+// ── POST: adauga produs — DOAR ADMIN ──────────
 if ($method === 'POST' && $action === 'add') {
+    requireAdmin();
     $data  = json_decode(file_get_contents('php://input'), true);
     $name  = trim($data['name'] ?? '');
     $price = intval($data['price'] ?? 0);
-    $disc  = intval($data['discount'] ?? 0);
+    $disc  = max(0, min(100, intval($data['discount'] ?? 0)));
     $desc  = trim($data['desc'] ?? '');
-    $image = $data['image'] ?? 'Imagini/blank_image.jpg';
+    $image = $data['image'] ?? null;
 
     if (!$name || !$price) {
         echo json_encode(['error' => 'Numele si pretul sunt obligatorii.']);
         exit();
+    }
+    if (strlen($name) > 200) { echo json_encode(['error' => 'Numele produsului este prea lung.']); exit(); }
+    if (strlen($desc) > 2000) { echo json_encode(['error' => 'Descrierea este prea lunga (max 2000 caractere).']); exit(); }
+
+    // Validare imagine daca e trimisa
+    if ($image && $image !== 'Imagini/blank_image.jpg') {
+        $imgCheck = validateBase64Image($image);
+        if (!$imgCheck['valid']) {
+            echo json_encode(['error' => $imgCheck['error']]);
+            exit();
+        }
+    } else {
+        $image = 'Imagini/blank_image.jpg';
     }
 
     $stmt = $db->prepare("INSERT INTO products (name, price, discount, description, image, active) VALUES (?, ?, ?, ?, ?, 1)");
@@ -73,13 +83,14 @@ if ($method === 'POST' && $action === 'add') {
     exit();
 }
 
-// ── POST: editeaza produs ────────────────────
+// ── POST: editeaza produs — DOAR ADMIN ────────
 if ($method === 'POST' && $action === 'edit') {
+    requireAdmin();
     $data  = json_decode(file_get_contents('php://input'), true);
     $id    = intval($data['id'] ?? 0);
     $name  = trim($data['name'] ?? '');
     $price = intval($data['price'] ?? 0);
-    $disc  = intval($data['discount'] ?? 0);
+    $disc  = max(0, min(100, intval($data['discount'] ?? 0)));
     $desc  = trim($data['desc'] ?? '');
     $image = $data['image'] ?? null;
 
@@ -91,16 +102,13 @@ if ($method === 'POST' && $action === 'edit') {
         $stmt->bind_param('siisi', $name, $price, $disc, $desc, $id);
     }
 
-    if ($stmt->execute()) {
-        echo json_encode(['success' => true]);
-    } else {
-        echo json_encode(['error' => 'Eroare la editare.']);
-    }
+    echo json_encode(['success' => $stmt->execute(), 'error' => $stmt->error ?: null]);
     exit();
 }
 
-// ── POST: toggle activ/inactiv ───────────────
+// ── POST: toggle activ — DOAR ADMIN ───────────
 if ($method === 'POST' && $action === 'toggle') {
+    requireAdmin();
     $data   = json_decode(file_get_contents('php://input'), true);
     $id     = intval($data['id'] ?? 0);
     $active = ($data['active'] ?? true) ? 1 : 0;
@@ -111,8 +119,9 @@ if ($method === 'POST' && $action === 'toggle') {
     exit();
 }
 
-// ── DELETE: sterge produs ────────────────────
+// ── DELETE: sterge produs — DOAR ADMIN ────────
 if ($method === 'DELETE' && $action === 'delete') {
+    requireAdmin();
     $data = json_decode(file_get_contents('php://input'), true);
     $id   = intval($data['id'] ?? 0);
 

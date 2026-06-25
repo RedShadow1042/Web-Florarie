@@ -1,4 +1,10 @@
 // Acest fișier rulează exclusiv pe pagina admin.html
+
+// ── Sanitizare HTML (previne XSS) ────────────
+function escAdmin(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     setupAdminPanelLogic();
     setupHeroAdmin();
@@ -19,12 +25,13 @@ function setupAdminPanelLogic() {
 
     if (!bouquetListContainer || !activeOrdersContainer || !completedOrdersContainer) return;
 
-    // Helper API
+    // Helper API — credentials:'include' trimite cookie-ul de sesiune PHP
     async function api(url, method, body) {
         const res = await fetch(url, {
-            method: method || 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            body: body ? JSON.stringify(body) : undefined
+            method:      method || 'GET',
+            credentials: 'include',
+            headers:     { 'Content-Type': 'application/json' },
+            body:        body ? JSON.stringify(body) : undefined
         });
         return res.json();
     }
@@ -43,16 +50,16 @@ function setupAdminPanelLogic() {
         catalog.forEach(bouquet => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><img src="${bouquet.image}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;" onerror="this.src='Imagini/blank_image.jpg'"></td>
-                <td><strong>${bouquet.name}</strong></td>
-                <td>${bouquet.price} LEI</td>
-                <td>${bouquet.discount || 0}%</td>
-                <td><input type="checkbox" ${bouquet.active ? 'checked' : ''} data-id="${bouquet.id}" onchange="toggleActiveStatus(this)"></td>
+                <td><img src="${escAdmin(bouquet.image)}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;" onerror="this.src='Imagini/blank_image.jpg'"></td>
+                <td><strong>${escAdmin(bouquet.name)}</strong></td>
+                <td>${escAdmin(String(bouquet.price))} LEI</td>
+                <td>${escAdmin(String(bouquet.discount || 0))}%</td>
+                <td><input type="checkbox" ${bouquet.active ? 'checked' : ''} data-id="${escAdmin(String(bouquet.id))}" onchange="toggleActiveStatus(this)"></td>
                 <td>
                     <button style="background:#f39c12;color:white;border:none;padding:5px 8px;border-radius:4px;cursor:pointer;margin-right:5px;"
-                        onclick="window.location.href='edit-produs.html?id=${bouquet.id}'">Editeaza</button>
+                        onclick="window.location.href='edit-produs.html?id=${escAdmin(String(bouquet.id))}'">Editeaza</button>
                     <button style="background:#dc3545;color:white;border:none;padding:5px 8px;border-radius:4px;cursor:pointer;"
-                        data-id="${bouquet.id}" data-name="${bouquet.name}" class="delete-product-btn">Sterge</button>
+                        data-id="${escAdmin(String(bouquet.id))}" data-name="${escAdmin(bouquet.name)}" class="delete-product-btn">Sterge</button>
                 </td>`;
             bouquetListContainer.appendChild(tr);
         });
@@ -95,22 +102,22 @@ function setupAdminPanelLogic() {
             if (searchStr && !order.id.toLowerCase().includes(searchStr) && !clientName.toLowerCase().includes(searchStr)) return;
 
             const items = Array.isArray(order.items) ? order.items : [];
-            const produseText = items.map(i => `${i.name} (${i.price} LEI)`).join(', ') || 'Produse nespecificate';
+            const produseText = items.map(i => `${escAdmin(i.name)} (${escAdmin(String(i.price))} LEI)`).join(', ') || 'Produse nespecificate';
             const isActive = order.status !== 'completed';
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><code>#${order.id.replace('CMD-','')}</code></td>
-                <td><strong>${clientName}</strong></td>
+                <td><code>#${escAdmin(order.id.replace('CMD-',''))}</code></td>
+                <td><strong>${escAdmin(clientName)}</strong></td>
                 <td>${produseText}</td>
-                <td style="color:#769b21;font-weight:bold;">${order.total} LEI</td>
-                <td><small>${order.date || 'N/A'}</small></td>
+                <td style="color:#769b21;font-weight:bold;">${escAdmin(String(order.total))} LEI</td>
+                <td><small>${escAdmin(order.date || 'N/A')}</small></td>
                 <td style="display:flex;gap:8px;align-items:center;padding:10px;">
                     ${isActive
-                        ? `<button class="btn-status-success" style="padding:4px 8px;font-size:11px;cursor:pointer;" data-id="${order.id}">Finalizeaza ✓</button>`
+                        ? `<button class="btn-status-success" style="padding:4px 8px;font-size:11px;cursor:pointer;" data-id="${escAdmin(order.id)}">Finalizeaza ✓</button>`
                         : '<span style="color:#769b21;font-weight:bold;font-size:12px;">Finalizata</span>'
                     }
-                    <button class="btn-status-danger" style="padding:4px 8px;font-size:11px;cursor:pointer;" data-id="${order.id}">Elimina ✕</button>
+                    <button class="btn-status-danger" style="padding:4px 8px;font-size:11px;cursor:pointer;" data-id="${escAdmin(order.id)}">Elimina ✕</button>
                 </td>`;
 
             tr.querySelectorAll('button').forEach(btn => {
@@ -452,9 +459,10 @@ function setupHeroAdmin() {
     // Helper API
     async function heroApi(action, method, body) {
         const res = await fetch(`api/hero.php?action=${action}`, {
-            method: method || 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            body: body ? JSON.stringify(body) : undefined
+            method:      method || 'GET',
+            credentials: 'include',
+            headers:     { 'Content-Type': 'application/json' },
+            body:        body ? JSON.stringify(body) : undefined
         });
         return res.json();
     }
@@ -666,6 +674,7 @@ function setupGalleryAdmin() {
             
             const res = await fetch('api/gallery.php?action=add', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
@@ -693,16 +702,16 @@ function setupGalleryManagement() {
         const listContainer = document.getElementById('admin-gallery-list');
         if (!listContainer) return;
         
-        const res = await fetch('api/gallery.php?action=all');
+        const res   = await fetch('api/gallery.php?action=all', { credentials: 'include' });
         const items = await res.json();
         
         listContainer.innerHTML = items.map(item => `
             <tr>
-                <td><img src="${item.image}" style="width:60px; height:60px; object-fit:cover; border-radius:4px;"></td>
-                <td>${item.title}</td>
-                <td>${item.made_by}</td>
+                <td><img src="${escAdmin(item.image)}" style="width:60px; height:60px; object-fit:cover; border-radius:4px;"></td>
+                <td>${escAdmin(item.title)}</td>
+                <td>${escAdmin(item.made_by)}</td>
                 <td>
-                    <button onclick="deleteGalleryItem(${item.id})" class="btn-delete">Șterge</button>
+                    <button onclick="deleteGalleryItem(${parseInt(item.id)})" class="btn-delete">Șterge</button>
                 </td>
             </tr>
         `).join('');
@@ -711,9 +720,10 @@ function setupGalleryManagement() {
     window.deleteGalleryItem = async (id) => {
         if (!confirm('Sigur ștergi?')) return;
         await fetch('api/gallery.php?action=delete', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id })
+            method:      'DELETE',
+            credentials: 'include',
+            headers:     { 'Content-Type': 'application/json' },
+            body:        JSON.stringify({ id })
         });
         loadGalleryAdmin();
     };
@@ -730,7 +740,7 @@ function setupReviewsAdmin() {
     let _activeTab  = 'pending';
 
     async function loadReviews() {
-        const res = await fetch('api/reviews.php?action=all');
+        const res = await fetch('api/reviews.php?action=all', { credentials: 'include' });
         _reviews  = await res.json();
         if (!Array.isArray(_reviews)) _reviews = [];
         updateBadges();
@@ -789,9 +799,7 @@ function setupReviewsAdmin() {
         });
     }
 
-    function escAdmin(str) {
-        return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
+    // escAdmin este definit global la inceputul fisierului
 
     window.switchReviewTab = function(status) {
         _activeTab = status;
@@ -803,9 +811,10 @@ function setupReviewsAdmin() {
 
     window.setReviewStatus = async function(id, status) {
         await fetch('api/reviews.php?action=status', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, status })
+            method:      'POST',
+            credentials: 'include',
+            headers:     { 'Content-Type': 'application/json' },
+            body:        JSON.stringify({ id, status })
         });
         await loadReviews();
     };
@@ -813,9 +822,10 @@ function setupReviewsAdmin() {
     window.deleteReview = async function(id) {
         if (!confirm('Stergi aceasta recenzie definitiv?')) return;
         await fetch('api/reviews.php?action=delete', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id })
+            method:      'DELETE',
+            credentials: 'include',
+            headers:     { 'Content-Type': 'application/json' },
+            body:        JSON.stringify({ id })
         });
         await loadReviews();
     };

@@ -6,13 +6,9 @@
     <title>Panou Administrare - D.A.S Lotus</title>
     <link rel="stylesheet" href="style.css">
     
-    <script>
-        const currentUser = JSON.parse(localStorage.getItem('floraria_current_user'));
-        if (!currentUser || currentUser.role !== 'admin') {
-            alert('Acces refuzat! Această zonă este restricționată administratorilor.');
-            window.location.href = 'index.html';
-        }
-    </script>
+    <!-- Ascunde tot body-ul pana la confirmarea server-side -->
+    <!-- Fara asta, continutul apare o fractiune de secunda inainte de redirect -->
+    <style>body { visibility: hidden; }</style>
 
     <style>
         .admin-container {
@@ -258,6 +254,29 @@
     </style>
 </head>
 <body>
+    <script>
+        // Verificare admin REALA — intreaba serverul, nu localStorage
+        // Body-ul este ascuns pana la confirmarea sesiunii PHP
+        (async function verifyAdminServer() {
+            try {
+                const res  = await fetch('api/users.php?action=check_admin', {
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.isAdmin === true) {
+                    // Server confirma: utilizatorul are sesiune PHP valida cu rol admin
+                    document.body.style.visibility = 'visible';
+                } else {
+                    throw new Error('not admin');
+                }
+            } catch(e) {
+                // Sesiune invalida sau rol fals din localStorage — curatam si redirectionam
+                localStorage.removeItem('floraria_current_user');
+                sessionStorage.removeItem('floraria_current_user');
+                window.location.replace('index.html');
+            }
+        })();
+    </script>
 
     <header class="site-header">
         <div class="logo-area">

@@ -2,6 +2,10 @@
 // script.js — Homepage: produse + hero + cos
 // =============================================
 
+function escHtml(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
     updateCartCount();
     checkLoggedInUser();
@@ -34,14 +38,14 @@ async function renderHomepageProducts() {
             card.className = 'product-card';
             card.innerHTML = `
                 <div class="product-card-img-wrapper">
-                    ${discount > 0 ? `<div class="discount-tag">-${discount}%</div>` : ''}
-                    <img src="${bouquet.image}" alt="${bouquet.name}" onerror="this.src='Imagini/blank_image.jpg'">
+                    ${discount > 0 ? `<div class="discount-tag">-${escHtml(String(discount))}%</div>` : ''}
+                    <img src="${escHtml(bouquet.image)}" alt="${escHtml(bouquet.name)}" onerror="this.src='Imagini/blank_image.jpg'">
                 </div>
                 <div class="product-info">
-                    <h3>${bouquet.name}</h3>
+                    <h3>${escHtml(bouquet.name)}</h3>
                     <div class="price-container">${priceHtml}</div>
                     <button class="add-to-cart">Adauga in cos</button>
-                    <button class="view-details" onclick="window.location.href='produs.html?id=${bouquet.id}'">Detalii produs</button>
+                    <button class="view-details" onclick="window.location.href='produs.html?id=${escHtml(String(bouquet.id))}'">Detalii produs</button>
                 </div>`;
             card.querySelector('.add-to-cart').addEventListener('click', () => {
                 addToCart({ id: bouquet.id, name: bouquet.name, price: finalPrice });
@@ -70,31 +74,32 @@ async function renderHeroSlides() {
             // Fundal
             let bgStyle = '';
             if (s.bg_image) {
-                bgStyle = `background-image:url('${s.bg_image}');background-size:cover;background-position:center;`;
+                bgStyle = `background-image:url('${escHtml(s.bg_image)}');background-size:cover;background-position:center;`;
             } else if (s.bg) {
-                bgStyle = s.bg.includes('gradient') ? `background:${s.bg};` : `background-color:${s.bg};`;
+                bgStyle = s.bg.includes('gradient') ? `background:${escHtml(s.bg)};` : `background-color:${escHtml(s.bg)};`;
             }
 
-            // Overlay gradient (doar pentru slide-uri cu imagine)
+            // Overlay gradient
             let overlayHtml = '';
             if (s.bg_image) {
-                const gradDir = s.grad_dir || 'to right';
+                const gradDir = escHtml(s.grad_dir || 'to right');
                 const alpha   = ((parseInt(s.grad_str) || 55) / 100).toFixed(2);
                 overlayHtml = `<div class="hero-overlay" style="background:linear-gradient(${gradDir},rgba(0,0,0,${alpha}) 0%,rgba(0,0,0,0) 70%);"></div>`;
             }
 
-            // Pozitie text (clamped sigur; CSS reseteaza pe mobile <600px)
-            const posX    = Math.min(Math.max(parseInt(s.pos_x) || 50, 12), 88);
-            const posY    = Math.min(Math.max(parseInt(s.pos_y) || 50, 12), 78);
+            // Pozitie text
+            const posX     = Math.min(Math.max(parseInt(s.pos_x) || 50, 12), 88);
+            const posY     = Math.min(Math.max(parseInt(s.pos_y) || 50, 12), 78);
             const posStyle = `position:absolute;left:${posX}%;top:${posY}%;transform:translate(-50%,-50%);z-index:2;`;
 
+            // title si subtitle sunt HTML intentionat (rich text din admin) — atributele href/src sunt escapate
             html += `
             <div class="hero-slide has-dynamic-content ${i === 0 ? 'active' : ''}" style="${bgStyle}">
                 ${overlayHtml}
                 <div class="hero-content" style="${posStyle}">
                     ${s.title    ? `<h2>${s.title}</h2>`    : ''}
                     ${s.subtitle ? `<p>${s.subtitle}</p>`   : ''}
-                    ${s.btn_text ? `<a href="${s.btn_link || '#'}" class="hero-btn">${s.btn_text}</a>` : ''}
+                    ${s.btn_text ? `<a href="${escHtml(s.btn_link || '#')}" class="hero-btn">${escHtml(s.btn_text)}</a>` : ''}
                 </div>
             </div>`;
         });

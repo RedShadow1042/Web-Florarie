@@ -301,8 +301,9 @@ if (document.getElementById('rv-grid')) {
         btn.disabled = true;
         try {
             const res  = await fetch('api/reviews.php?action=delete_own', {
-                method: 'DELETE',
-                headers: {'Content-Type':'application/json'},
+                method:      'DELETE',
+                credentials: 'include',
+                headers:     {'Content-Type':'application/json'},
                 body: JSON.stringify({ id, user_id: currentUser.id })
             });
             const data = await res.json();
@@ -474,7 +475,7 @@ if (document.getElementById('rv-grid')) {
 
         try {
             const res = await fetch('api/reviews.php?action=add', {
-                method:'POST', headers:{'Content-Type':'application/json'},
+                method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
                 body: JSON.stringify({
                     user_id: currentUser.id, user_name: currentUser.name,
                     type, product_id: productId, product_name: productName,

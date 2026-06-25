@@ -2,6 +2,10 @@
 let galleryItems = [];
 let currentIndex = 0;
 
+function escGal(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 // ── Skeleton placeholders ──────────────────────────────
 function showSkeletons(n = 8) {
     const container = document.getElementById('gallery-container');
@@ -20,10 +24,10 @@ function renderGallery(items) {
     }
 
     container.innerHTML = items.map((item, i) => `
-        <div class="gallery-item" data-index="${i}" tabindex="0" role="button" aria-label="Deschide ${item.title}">
-            <img src="${item.image}" alt="${item.title}" loading="lazy">
+        <div class="gallery-item" data-index="${i}" tabindex="0" role="button" aria-label="Deschide ${escGal(item.title)}">
+            <img src="${escGal(item.image)}" alt="${escGal(item.title)}" loading="lazy">
             <div class="zoom-icon">🔍</div>
-            <div class="overlay">${item.title}</div>
+            <div class="overlay">${escGal(item.title)}</div>
         </div>
     `).join('');
 
